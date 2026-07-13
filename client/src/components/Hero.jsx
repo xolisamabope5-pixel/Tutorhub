@@ -1,9 +1,6 @@
-import Navbar from "./components/Navbar"
-import Hero from "./components/Hero"
-
-function App() {
+function Hero() {
   return (
-    <div className="hero">
+    <section>
       <h1>TutorHub</h1>
 
       <h2>by Solethu Labs</h2>
@@ -19,8 +16,8 @@ function App() {
       <button>
         Login
       </button>
-    </div>
+    </section>
   )
 }
 
-export default App
+export default Hero
