@@ -9,9 +9,9 @@ function Hero() {
         The smarter way for tuition centres to manage learning.
       </p>
 
-      <button>
-        Register
-      </button>
+      <a href="/register">
+         Register
+      </a>
 
       <button>
         Login
