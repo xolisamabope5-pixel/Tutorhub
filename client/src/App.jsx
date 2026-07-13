@@ -1,25 +1,13 @@
-import Navbar from "./components/Navbar"
-import Hero from "./components/Hero"
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+import Home from "./pages/Home"
 
 function App() {
   return (
-    <div className="hero">
-      <h1>TutorHub</h1>
-
-      <h2>by Solethu Labs</h2>
-
-      <p>
-        The smarter way for tuition centres to manage learning.
-      </p>
-
-      <button>
-        Register
-      </button>
-
-      <button>
-        Login
-      </button>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
