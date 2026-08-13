@@ -1,0 +1,61 @@
+.dashboard-box{
+
+
+    width:220px;
+
+    padding:25px;
+
+    border-radius:15px;
+
+    background:white;
+
+    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+
+    cursor:pointer;
+
+    transition:0.3s;
+
+    text-align:center;
+
+
+}
+
+
+
+.dashboard-box:hover{
+
+
+    transform:translateY(-5px);
+
+
+}
+
+
+
+.dashboard-box h2{
+
+
+    font-size:40px;
+
+
+}
+
+
+
+.dashboard-box h3{
+
+
+    margin:10px 0;
+
+
+}
+
+
+
+.dashboard-box p{
+
+
+    color:#666;
+
+
+}

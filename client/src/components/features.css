@@ -1,0 +1,52 @@
+.features {
+
+  padding: 50px 40px;
+
+  text-align: center;
+
+}
+
+
+.features h2 {
+
+  font-size: 36px;
+
+  color: #1e3a8a;
+
+}
+
+
+
+.feature-grid {
+
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+
+  gap: 25px;
+
+  margin-top: 30px;
+
+}
+
+
+
+.feature-card {
+
+  background: white;
+
+  padding: 25px;
+
+  border-radius: 12px;
+
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+
+}
+
+
+
+.feature-card h3 {
+
+  color: #2563eb;
+
+}

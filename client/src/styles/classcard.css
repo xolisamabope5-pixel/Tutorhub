@@ -1,0 +1,43 @@
+.class-card {
+
+
+background:white;
+
+border-radius:15px;
+
+padding:25px;
+
+box-shadow:
+
+0 5px 15px rgba(0,0,0,0.1);
+
+
+transition:0.3s;
+
+
+}
+
+
+
+.class-card:hover {
+
+
+transform:translateY(-5px);
+
+
+}
+
+
+.class-card button {
+
+
+padding:10px 20px;
+
+border:none;
+
+border-radius:8px;
+
+cursor:pointer;
+
+
+}

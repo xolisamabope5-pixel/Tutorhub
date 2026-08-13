@@ -1,23 +1,157 @@
+
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import "./Hero.css";
+
 function Hero() {
-  return (
-    <section>
-      <h1>TutorHub</h1>
 
-      <h2>by Solethu Labs</h2>
+    const [platformSettings, setPlatformSettings] = useState({
+        platformName: "TutorHub",
+        tagline: "Smart Tuition Management Platform",
+        primaryColor: "#111827",
+        secondaryColor: "#eef2ff"
+    });
 
-      <p>
-        The smarter way for tuition centres to manage learning.
-      </p>
 
-      <a href="/register">
-         Register
-      </a>
+    // =========================================
+    // FETCH PLATFORM SETTINGS
+    // =========================================
 
-      <button>
-        Login
-      </button>
-    </section>
-  )
+    useEffect(() => {
+
+        const fetchPlatformSettings = async () => {
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:5000/api/platform-settings"
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Could not fetch platform settings"
+                    );
+                }
+
+                const data = await response.json();
+
+                setPlatformSettings({
+
+                    platformName:
+                        data.platformName ||
+                        "TutorHub",
+
+                    tagline:
+                        data.tagline ||
+                        "Smart Tuition Management Platform",
+
+                    primaryColor:
+                        data.primaryColor ||
+                        "#111827",
+
+                    secondaryColor:
+                        data.secondaryColor ||
+                        "#eef2ff"
+
+                });
+
+            } catch (error) {
+
+                console.log(
+                    "Could not load platform settings:",
+                    error
+                );
+
+            }
+
+        };
+
+
+        fetchPlatformSettings();
+
+    }, []);
+
+
+    return (
+
+        <section
+            className="hero"
+            style={{
+                background:
+                    platformSettings.secondaryColor
+            }}
+        >
+
+            <div className="hero-content">
+
+
+                <h1
+                    style={{
+                        color:
+                            platformSettings.primaryColor
+                    }}
+                >
+                    {platformSettings.platformName}
+                </h1>
+
+
+                <h2>
+                    {platformSettings.tagline}
+                </h2>
+
+
+                <p>
+                    Manage learners, track payments,
+                    organize classes, and bring your
+                    tuition centre online.
+                </p>
+
+
+                <div className="hero-buttons">
+
+
+                    <Link to="/register">
+
+                        <button
+                            style={{
+                                background:
+                                    platformSettings.primaryColor
+                            }}
+                        >
+                            Join {platformSettings.platformName}
+                        </button>
+
+                    </Link>
+
+
+                    <Link to="/admin-login">
+
+                        <button
+                            className="secondary-btn"
+                            style={{
+                                color:
+                                    platformSettings.primaryColor,
+                                borderColor:
+                                    platformSettings.primaryColor
+                            }}
+                        >
+                            Admin Login
+                        </button>
+
+                    </Link>
+
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+    );
+
 }
 
-export default Hero
+export default Hero;
+

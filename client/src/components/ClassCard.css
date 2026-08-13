@@ -1,0 +1,57 @@
+.class-card {
+
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 15px;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+    margin: 20px 0;
+
+    max-width: 400px;
+
+}
+
+
+
+.class-card h2 {
+
+    margin-bottom: 10px;
+
+}
+
+
+
+.class-card p {
+
+    color: #444;
+
+}
+
+
+
+.class-card button {
+
+    background: #2563EB;
+
+    color: white;
+
+    border: none;
+
+    padding: 10px 18px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+}
+
+
+
+.class-card button:hover {
+
+    background: #1D4ED8;
+
+}

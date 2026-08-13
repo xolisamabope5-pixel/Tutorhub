@@ -1,0 +1,261 @@
+.hero {
+
+    min-height: 520px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-align: center;
+
+    padding: 70px 25px;
+
+    box-sizing: border-box;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--secondary-color),
+            #ffffff
+        );
+
+}
+
+
+/* =========================================
+   HERO CONTENT
+========================================= */
+
+.hero-content {
+
+    max-width: 850px;
+
+    margin: 0 auto;
+
+}
+
+
+/* =========================================
+   LOGO
+========================================= */
+
+.hero-logo {
+
+    max-width: 240px;
+
+    max-height: 100px;
+
+    object-fit: contain;
+
+    margin-bottom: 20px;
+
+}
+
+
+/* =========================================
+   PLATFORM NAME
+========================================= */
+
+.hero h1 {
+
+    margin: 0;
+
+    font-size: 58px;
+
+    line-height: 1.05;
+
+    font-weight: 900;
+
+    color: var(--primary-color);
+
+    letter-spacing: -2px;
+
+}
+
+
+/* =========================================
+   TAGLINE
+========================================= */
+
+.hero h2 {
+
+    margin:
+
+        20px auto
+
+        0;
+
+    max-width: 750px;
+
+    font-size: 27px;
+
+    line-height: 1.25;
+
+    color: #1f2937;
+
+}
+
+
+/* =========================================
+   DESCRIPTION
+========================================= */
+
+.hero p {
+
+    max-width: 650px;
+
+    margin:
+
+        18px auto
+
+        0;
+
+    font-size: 16px;
+
+    line-height: 1.7;
+
+    color: #6b7280;
+
+}
+
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+.hero-buttons {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-top: 30px;
+
+}
+
+
+.hero-buttons a {
+
+    text-decoration: none;
+
+}
+
+
+.hero-buttons button {
+
+    border: none;
+
+    color: #ffffff;
+
+    padding:
+
+        13px 23px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    font-weight: 800;
+
+    transition:
+
+        transform 0.2s ease,
+
+        opacity 0.2s ease;
+
+}
+
+
+.hero-buttons button:hover {
+
+    transform: translateY(-2px);
+
+    opacity: 0.9;
+
+}
+
+
+/* =========================================
+   SECONDARY BUTTON
+========================================= */
+
+.hero-buttons .secondary-btn {
+
+    border:
+
+        1px solid var(--primary-color);
+
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 700px) {
+
+    .hero {
+
+        min-height: 450px;
+
+        padding:
+
+            55px 20px;
+
+    }
+
+
+    .hero h1 {
+
+        font-size: 42px;
+
+    }
+
+
+    .hero h2 {
+
+        font-size: 22px;
+
+    }
+
+
+    .hero p {
+
+        font-size: 14px;
+
+    }
+
+
+    .hero-buttons {
+
+        flex-direction: column;
+
+        width: 100%;
+
+    }
+
+
+    .hero-buttons a {
+
+        width: 100%;
+
+        max-width: 280px;
+
+    }
+
+
+    .hero-buttons button {
+
+        width: 100%;
+
+    }
+
+}

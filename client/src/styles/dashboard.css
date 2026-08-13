@@ -1,0 +1,49 @@
+.dashboard-container {
+
+    padding: 30px;
+
+}
+
+
+.dashboard-header {
+
+    margin-bottom: 30px;
+
+}
+
+
+
+.dashboard-cards {
+
+    display:flex;
+
+    gap:20px;
+
+    flex-wrap:wrap;
+
+    margin-bottom:40px;
+
+}
+
+
+
+.class-grid {
+
+    display:grid;
+
+    grid-template-columns:
+
+    repeat(auto-fit,minmax(280px,1fr));
+
+    gap:25px;
+
+}
+
+
+.section-title {
+
+    margin-top:30px;
+
+    margin-bottom:20px;
+
+}
