@@ -87,10 +87,23 @@ function AdminLogin() {
             );
 
 
-            // Store username as well
+            // =====================================
+            // SAVE ADMIN JWT TOKEN
+            // =====================================
+
+            localStorage.setItem(
+                "adminToken",
+                data.token
+            );
+
+
+            // =====================================
+            // STORE ADMIN USERNAME
+            // =====================================
+
             localStorage.setItem(
                 "adminUsername",
-                data.username ||
+                data.admin?.username ||
                 username.trim()
             );
 

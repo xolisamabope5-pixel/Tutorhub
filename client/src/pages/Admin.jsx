@@ -5,6 +5,8 @@ function Admin() {
 
     const navigate = useNavigate();
 
+    const API_URL = "http://localhost:5000";
+
     const [programs, setPrograms] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -53,6 +55,79 @@ function Admin() {
     const [changingLogin, setChangingLogin] = useState(false);
 
     // =========================================
+    // GET ADMIN TOKEN
+    // =========================================
+
+    const getAdminToken = () => {
+
+        return localStorage.getItem("adminToken");
+
+    };
+
+    // =========================================
+    // ADMIN AUTH HEADERS
+    // =========================================
+
+    const getAdminHeaders = (includeJson = false) => {
+
+        const token = getAdminToken();
+
+        const headers = {};
+
+        if (includeJson) {
+
+            headers["Content-Type"] =
+                "application/json";
+
+        }
+
+        if (token) {
+
+            headers["Authorization"] =
+                `Bearer ${token}`;
+
+        }
+
+        return headers;
+
+    };
+
+    // =========================================
+    // HANDLE UNAUTHORIZED
+    // =========================================
+
+    const handleUnauthorized = (response) => {
+
+        if (response.status === 401 ||
+            response.status === 403) {
+
+            localStorage.removeItem(
+                "adminLoggedIn"
+            );
+
+            localStorage.removeItem(
+                "adminToken"
+            );
+
+            localStorage.removeItem(
+                "adminUsername"
+            );
+
+            alert(
+                "Your admin session has expired. Please login again."
+            );
+
+            navigate("/admin-login");
+
+            return true;
+
+        }
+
+        return false;
+
+    };
+
+    // =========================================
     // CHECK ADMIN LOGIN
     // =========================================
 
@@ -61,8 +136,13 @@ function Admin() {
         const isLoggedIn =
             localStorage.getItem("adminLoggedIn");
 
-        if (!isLoggedIn) {
+        const token =
+            localStorage.getItem("adminToken");
+
+        if (!isLoggedIn || !token) {
+
             navigate("/admin-login");
+
         }
 
     }, [navigate]);
@@ -78,16 +158,28 @@ function Admin() {
             setLoading(true);
 
             const response = await fetch(
-                "http://localhost:5000/api/admin/programs"
+                `${API_URL}/api/admin/programs`,
+                {
+                    method: "GET",
+                    headers: getAdminHeaders()
+                }
             );
 
-            if (!response.ok) {
-                throw new Error(
-                    "Could not fetch tuition centres"
-                );
+            if (handleUnauthorized(response)) {
+                return;
             }
 
-            const data = await response.json();
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Could not fetch tuition centres"
+                );
+
+            }
 
             setPrograms(
                 Array.isArray(data)
@@ -97,7 +189,12 @@ function Admin() {
 
         } catch (error) {
 
-            console.log(error);
+            console.log(
+                "Could not load tuition centres:",
+                error
+            );
+
+            setPrograms([]);
 
         } finally {
 
@@ -108,7 +205,9 @@ function Admin() {
     };
 
     useEffect(() => {
+
         fetchPrograms();
+
     }, []);
 
     // =========================================
@@ -122,16 +221,27 @@ function Admin() {
             setPaymentsLoading(true);
 
             const response = await fetch(
-                "http://localhost:5000/api/owner-payments/"
+                `${API_URL}/api/owner-payments/`,
+                {
+                    method: "GET",
+                    headers: getAdminHeaders()
+                }
             );
 
+            if (handleUnauthorized(response)) {
+                return;
+            }
+
             if (!response.ok) {
+
                 throw new Error(
                     "Could not fetch TutorHub payments"
                 );
+
             }
 
-            const data = await response.json();
+            const data =
+                await response.json();
 
             setOwnerPayments(
                 Array.isArray(data)
@@ -155,7 +265,9 @@ function Admin() {
     };
 
     useEffect(() => {
+
         fetchOwnerPayments();
+
     }, []);
 
     // =========================================
@@ -167,16 +279,27 @@ function Admin() {
         try {
 
             const response = await fetch(
-                "http://localhost:5000/api/platform-settings"
+                `${API_URL}/api/platform-settings`,
+                {
+                    method: "GET",
+                    headers: getAdminHeaders()
+                }
             );
 
+            if (handleUnauthorized(response)) {
+                return;
+            }
+
             if (!response.ok) {
+
                 throw new Error(
                     "Could not fetch platform settings"
                 );
+
             }
 
-            const data = await response.json();
+            const data =
+                await response.json();
 
             setPlatformSettings({
 
@@ -232,7 +355,9 @@ function Admin() {
     };
 
     useEffect(() => {
+
         fetchPlatformSettings();
+
     }, []);
 
     // =========================================
@@ -254,7 +379,9 @@ function Admin() {
     // =========================================
 
     const closeSettings = () => {
+
         setShowSettings(false);
+
     };
 
     // =========================================
@@ -302,8 +429,11 @@ function Admin() {
         } = e.target;
 
         setPlatformSettings(prev => ({
+
             ...prev,
+
             [name]: value
+
         }));
 
     };
@@ -333,22 +463,26 @@ function Admin() {
             setSavingSettings(true);
 
             const response = await fetch(
-                "http://localhost:5000/api/platform-settings",
+                `${API_URL}/api/platform-settings`,
                 {
                     method: "PUT",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                    headers:
+                        getAdminHeaders(true),
 
-                    body: JSON.stringify(
-                        platformSettings
-                    )
+                    body:
+                        JSON.stringify(
+                            platformSettings
+                        )
                 }
             );
 
-            const data = await response.json();
+            if (handleUnauthorized(response)) {
+                return;
+            }
+
+            const data =
+                await response.json();
 
             if (!response.ok) {
 
@@ -461,7 +595,10 @@ function Admin() {
 
         }
 
-        if (newPassword !== confirmPassword) {
+        if (
+            newPassword !==
+            confirmPassword
+        ) {
 
             alert(
                 "New passwords do not match."
@@ -471,7 +608,9 @@ function Admin() {
 
         }
 
-        if (newPassword.length < 5) {
+        if (
+            newPassword.length < 5
+        ) {
 
             alert(
                 "New password must be at least 5 characters."
@@ -486,29 +625,33 @@ function Admin() {
             setChangingLogin(true);
 
             const response = await fetch(
-                "http://localhost:5000/api/admin-auth/change-login",
+                `${API_URL}/api/admin/change-login`,
                 {
                     method: "PUT",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                    headers:
+                        getAdminHeaders(true),
 
-                    body: JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        currentPassword,
+                            currentPassword,
 
-                        newUsername:
-                            newUsername.trim(),
+                            newUsername:
+                                newUsername.trim(),
 
-                        newPassword
+                            newPassword
 
-                    })
+                        })
                 }
             );
 
-            const data = await response.json();
+            if (handleUnauthorized(response)) {
+                return;
+            }
+
+            const data =
+                await response.json();
 
             if (!response.ok) {
 
@@ -518,6 +661,29 @@ function Admin() {
                 );
 
                 return;
+
+            }
+
+            /*
+             * The backend issues a new token.
+             * Store it immediately.
+             */
+
+            if (data.token) {
+
+                localStorage.setItem(
+                    "adminToken",
+                    data.token
+                );
+
+            }
+
+            if (data.username) {
+
+                localStorage.setItem(
+                    "adminUsername",
+                    data.username
+                );
 
             }
 
@@ -536,6 +702,10 @@ function Admin() {
 
             localStorage.removeItem(
                 "adminLoggedIn"
+            );
+
+            localStorage.removeItem(
+                "adminToken"
             );
 
             navigate("/admin-login");
@@ -568,13 +738,19 @@ function Admin() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/approve-program/${id}`,
+                `${API_URL}/api/admin/approve-program/${id}`,
                 {
-                    method: "PUT"
+                    method: "PUT",
+                    headers: getAdminHeaders()
                 }
             );
 
-            const data = await response.json();
+            if (handleUnauthorized(response)) {
+                return;
+            }
+
+            const data =
+                await response.json();
 
             if (!response.ok) {
 
@@ -591,7 +767,7 @@ function Admin() {
                 "Tuition centre approved successfully 🚀"
             );
 
-            fetchPrograms();
+            await fetchPrograms();
 
         } catch (error) {
 
@@ -611,9 +787,10 @@ function Admin() {
 
     const blockProgram = async (id) => {
 
-        const confirmBlock = window.confirm(
-            "Are you sure you want to block this tuition centre? Its owner, tutors and learners will lose access."
-        );
+        const confirmBlock =
+            window.confirm(
+                "Are you sure you want to block this tuition centre? Its owner, tutors and learners will lose access."
+            );
 
         if (!confirmBlock) {
             return;
@@ -622,13 +799,19 @@ function Admin() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/block-program/${id}`,
+                `${API_URL}/api/admin/block-program/${id}`,
                 {
-                    method: "PUT"
+                    method: "PUT",
+                    headers: getAdminHeaders()
                 }
             );
 
-            const data = await response.json();
+            if (handleUnauthorized(response)) {
+                return;
+            }
+
+            const data =
+                await response.json();
 
             if (!response.ok) {
 
@@ -645,7 +828,7 @@ function Admin() {
                 "Tuition centre blocked."
             );
 
-            fetchPrograms();
+            await fetchPrograms();
 
         } catch (error) {
 
@@ -668,13 +851,19 @@ function Admin() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/unblock-program/${id}`,
+                `${API_URL}/api/admin/unblock-program/${id}`,
                 {
-                    method: "PUT"
+                    method: "PUT",
+                    headers: getAdminHeaders()
                 }
             );
 
-            const data = await response.json();
+            if (handleUnauthorized(response)) {
+                return;
+            }
+
+            const data =
+                await response.json();
 
             if (!response.ok) {
 
@@ -691,7 +880,7 @@ function Admin() {
                 "Tuition centre unblocked successfully 🔓"
             );
 
-            fetchPrograms();
+            await fetchPrograms();
 
         } catch (error) {
 
@@ -706,10 +895,106 @@ function Admin() {
     };
 
     // =========================================
+    // DELETE TUITION CENTRE
+    // =========================================
+
+    const deleteProgram = async (
+        id,
+        name
+    ) => {
+
+        const confirmDelete =
+            window.confirm(
+
+                `⚠️ DELETE TUITION CENTRE\n\nAre you sure you want to permanently delete "${name}"?\n\nThis will remove the tuition centre and its associated owner, tutors and learners.\n\nTHIS ACTION CANNOT BE UNDONE.`
+
+            );
+
+        if (!confirmDelete) {
+            return;
+        }
+
+        try {
+
+            /*
+             * Remove the card immediately so the
+             * dashboard feels responsive.
+             */
+
+            setPrograms(prev =>
+                prev.filter(
+                    program =>
+                        program._id !== id
+                )
+            );
+
+            const response = await fetch(
+                `${API_URL}/api/admin/delete-program/${id}`,
+                {
+                    method: "DELETE",
+
+                    headers:
+                        getAdminHeaders()
+                }
+            );
+
+            if (handleUnauthorized(response)) {
+                await fetchPrograms();
+                return;
+            }
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                /*
+                 * If deletion failed,
+                 * reload the real data.
+                 */
+
+                await fetchPrograms();
+
+                alert(
+                    data.message ||
+                    "Could not delete tuition centre."
+                );
+
+                return;
+
+            }
+
+            alert(
+                "Tuition centre deleted successfully 🗑️"
+            );
+
+            await fetchPrograms();
+            await fetchOwnerPayments();
+
+        } catch (error) {
+
+            console.log(
+                "Delete tuition centre error:",
+                error
+            );
+
+            await fetchPrograms();
+
+            alert(
+                "Something went wrong while deleting the tuition centre."
+            );
+
+        }
+
+    };
+
+    // =========================================
     // OPEN PAYMENT PROOF
     // =========================================
 
-    const viewPaymentProof = (paymentProof) => {
+    const viewPaymentProof = (
+        paymentProof
+    ) => {
 
         if (!paymentProof) {
 
@@ -722,7 +1007,7 @@ function Admin() {
         }
 
         const fileUrl =
-            `http://localhost:5000/uploads/${paymentProof}`;
+            `${API_URL}/uploads/${paymentProof}`;
 
         window.open(
             fileUrl,
@@ -735,11 +1020,14 @@ function Admin() {
     // APPROVE OWNER PAYMENT
     // =========================================
 
-    const approveOwnerPayment = async (id) => {
+    const approveOwnerPayment = async (
+        id
+    ) => {
 
-        const confirmApprove = window.confirm(
-            "Approve this TutorHub payment? The tuition centre subscription will be marked as Paid."
-        );
+        const confirmApprove =
+            window.confirm(
+                "Approve this TutorHub payment? The tuition centre subscription will be marked as Paid."
+            );
 
         if (!confirmApprove) {
             return;
@@ -748,13 +1036,19 @@ function Admin() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/owner-payments/${id}/approve`,
+                `${API_URL}/api/owner-payments/${id}/approve`,
                 {
-                    method: "PUT"
+                    method: "PUT",
+                    headers: getAdminHeaders()
                 }
             );
 
-            const data = await response.json();
+            if (handleUnauthorized(response)) {
+                return;
+            }
+
+            const data =
+                await response.json();
 
             if (!response.ok) {
 
@@ -793,11 +1087,14 @@ function Admin() {
     // REJECT OWNER PAYMENT
     // =========================================
 
-    const rejectOwnerPayment = async (id) => {
+    const rejectOwnerPayment = async (
+        id
+    ) => {
 
-        const confirmReject = window.confirm(
-            "Are you sure you want to reject this TutorHub payment?"
-        );
+        const confirmReject =
+            window.confirm(
+                "Are you sure you want to reject this TutorHub payment?"
+            );
 
         if (!confirmReject) {
             return;
@@ -806,13 +1103,19 @@ function Admin() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/owner-payments/${id}/reject`,
+                `${API_URL}/api/owner-payments/${id}/reject`,
                 {
-                    method: "PUT"
+                    method: "PUT",
+                    headers: getAdminHeaders()
                 }
             );
 
-            const data = await response.json();
+            if (handleUnauthorized(response)) {
+                return;
+            }
+
+            const data =
+                await response.json();
 
             if (!response.ok) {
 
@@ -829,7 +1132,7 @@ function Admin() {
                 "TutorHub payment rejected."
             );
 
-            fetchOwnerPayments();
+            await fetchOwnerPayments();
 
         } catch (error) {
 
@@ -850,7 +1153,9 @@ function Admin() {
     // FORMAT PAYMENT DATE
     // =========================================
 
-    const formatPaymentDate = (date) => {
+    const formatPaymentDate = (
+        date
+    ) => {
 
         if (!date) {
             return "—";
@@ -858,7 +1163,9 @@ function Admin() {
 
         try {
 
-            return new Date(date).toLocaleDateString(
+            return new Date(
+                date
+            ).toLocaleDateString(
                 "en-ZA",
                 {
                     year: "numeric",
@@ -882,26 +1189,31 @@ function Admin() {
     const pendingPayments =
         ownerPayments.filter(
             payment =>
-                payment.status === "Pending"
+                payment.status ===
+                "Pending"
         );
 
     const paidPayments =
         ownerPayments.filter(
             payment =>
-                payment.status === "Paid"
+                payment.status ===
+                "Paid"
         );
 
     const rejectedPayments =
         ownerPayments.filter(
             payment =>
-                payment.status === "Rejected"
+                payment.status ===
+                "Rejected"
         );
 
     const totalPaid =
         paidPayments.reduce(
             (total, payment) =>
                 total +
-                Number(payment.amount || 0),
+                Number(
+                    payment.amount || 0
+                ),
             0
         );
 
@@ -915,7 +1227,17 @@ function Admin() {
             "adminLoggedIn"
         );
 
-        navigate("/admin-login");
+        localStorage.removeItem(
+            "adminToken"
+        );
+
+        localStorage.removeItem(
+            "adminUsername"
+        );
+
+        navigate(
+            "/admin-login"
+        );
 
     };
 
@@ -987,22 +1309,34 @@ function Admin() {
                     <div style={styles.headerActions}>
 
                         <button
-                            style={styles.settingsButton}
-                            onClick={openSettings}
+                            style={
+                                styles.settingsButton
+                            }
+                            onClick={
+                                openSettings
+                            }
                         >
                             ⚙️ Platform Settings
                         </button>
 
                         <button
-                            style={styles.changePasswordButton}
-                            onClick={openChangeLogin}
+                            style={
+                                styles.changePasswordButton
+                            }
+                            onClick={
+                                openChangeLogin
+                            }
                         >
                             🔐 Change Login
                         </button>
 
                         <button
-                            style={styles.logoutButton}
-                            onClick={logout}
+                            style={
+                                styles.logoutButton
+                            }
+                            onClick={
+                                logout
+                            }
                         >
                             Logout
                         </button>
@@ -1017,21 +1351,41 @@ function Admin() {
 
                 {showChangeLogin && (
 
-                    <div style={styles.settingsCard}>
+                    <div
+                        style={
+                            styles.settingsCard
+                        }
+                    >
 
-                        <div style={styles.settingsHeader}>
+                        <div
+                            style={
+                                styles.settingsHeader
+                            }
+                        >
 
                             <div>
 
-                                <p style={styles.eyebrow}>
+                                <p
+                                    style={
+                                        styles.eyebrow
+                                    }
+                                >
                                     SECURITY
                                 </p>
 
-                                <h2 style={styles.settingsTitle}>
+                                <h2
+                                    style={
+                                        styles.settingsTitle
+                                    }
+                                >
                                     🔐 Change Admin Login
                                 </h2>
 
-                                <p style={styles.settingsDescription}>
+                                <p
+                                    style={
+                                        styles.settingsDescription
+                                    }
+                                >
                                     Update the administrator
                                     username and password.
                                 </p>
@@ -1039,29 +1393,46 @@ function Admin() {
                             </div>
 
                             <button
-                                style={styles.closeButton}
-                                onClick={closeChangeLogin}
-                                disabled={changingLogin}
+                                style={
+                                    styles.closeButton
+                                }
+                                onClick={
+                                    closeChangeLogin
+                                }
+                                disabled={
+                                    changingLogin
+                                }
                             >
                                 ✕
                             </button>
 
                         </div>
 
-                        <div style={styles.loginChangeCard}>
+                        <div
+                            style={
+                                styles.loginChangeCard
+                            }
+                        >
 
-                            {/* CURRENT PASSWORD */}
+                            <div
+                                style={
+                                    styles.loginField
+                                }
+                            >
 
-                            <div style={styles.loginField}>
-
-                                <label style={styles.label}>
+                                <label
+                                    style={
+                                        styles.label
+                                    }
+                                >
                                     Current Password
                                 </label>
 
                                 <input
                                     type="password"
                                     value={
-                                        changeLoginData.currentPassword
+                                        changeLoginData
+                                            .currentPassword
                                     }
                                     onChange={(e) =>
                                         setChangeLoginData(
@@ -1073,24 +1444,33 @@ function Admin() {
                                         )
                                     }
                                     placeholder="Enter current password"
-                                    style={styles.input}
+                                    style={
+                                        styles.input
+                                    }
                                     autoComplete="current-password"
                                 />
 
                             </div>
 
-                            {/* NEW USERNAME */}
+                            <div
+                                style={
+                                    styles.loginField
+                                }
+                            >
 
-                            <div style={styles.loginField}>
-
-                                <label style={styles.label}>
+                                <label
+                                    style={
+                                        styles.label
+                                    }
+                                >
                                     New Username
                                 </label>
 
                                 <input
                                     type="text"
                                     value={
-                                        changeLoginData.newUsername
+                                        changeLoginData
+                                            .newUsername
                                     }
                                     onChange={(e) =>
                                         setChangeLoginData(
@@ -1102,24 +1482,33 @@ function Admin() {
                                         )
                                     }
                                     placeholder="Enter new username"
-                                    style={styles.input}
+                                    style={
+                                        styles.input
+                                    }
                                     autoComplete="username"
                                 />
 
                             </div>
 
-                            {/* NEW PASSWORD */}
+                            <div
+                                style={
+                                    styles.loginField
+                                }
+                            >
 
-                            <div style={styles.loginField}>
-
-                                <label style={styles.label}>
+                                <label
+                                    style={
+                                        styles.label
+                                    }
+                                >
                                     New Password
                                 </label>
 
                                 <input
                                     type="password"
                                     value={
-                                        changeLoginData.newPassword
+                                        changeLoginData
+                                            .newPassword
                                     }
                                     onChange={(e) =>
                                         setChangeLoginData(
@@ -1131,24 +1520,33 @@ function Admin() {
                                         )
                                     }
                                     placeholder="Enter new password"
-                                    style={styles.input}
+                                    style={
+                                        styles.input
+                                    }
                                     autoComplete="new-password"
                                 />
 
                             </div>
 
-                            {/* CONFIRM PASSWORD */}
+                            <div
+                                style={
+                                    styles.loginField
+                                }
+                            >
 
-                            <div style={styles.loginField}>
-
-                                <label style={styles.label}>
+                                <label
+                                    style={
+                                        styles.label
+                                    }
+                                >
                                     Confirm New Password
                                 </label>
 
                                 <input
                                     type="password"
                                     value={
-                                        changeLoginData.confirmPassword
+                                        changeLoginData
+                                            .confirmPassword
                                     }
                                     onChange={(e) =>
                                         setChangeLoginData(
@@ -1160,7 +1558,9 @@ function Admin() {
                                         )
                                     }
                                     placeholder="Confirm new password"
-                                    style={styles.input}
+                                    style={
+                                        styles.input
+                                    }
                                     autoComplete="new-password"
                                 />
 
@@ -1168,11 +1568,17 @@ function Admin() {
 
                         </div>
 
-                        {/* SECURITY NOTICE */}
+                        <div
+                            style={
+                                styles.securityNotice
+                            }
+                        >
 
-                        <div style={styles.securityNotice}>
-
-                            <span style={styles.securityIcon}>
+                            <span
+                                style={
+                                    styles.securityIcon
+                                }
+                            >
                                 🔒
                             </span>
 
@@ -1182,7 +1588,11 @@ function Admin() {
                                     Security Notice
                                 </strong>
 
-                                <p style={styles.securityText}>
+                                <p
+                                    style={
+                                        styles.securityText
+                                    }
+                                >
                                     After changing the admin
                                     login details, you will be
                                     logged out automatically and
@@ -1194,26 +1604,42 @@ function Admin() {
 
                         </div>
 
-                        {/* ACTION BUTTONS */}
-
-                        <div style={styles.settingsActions}>
+                        <div
+                            style={
+                                styles.settingsActions
+                            }
+                        >
 
                             <button
-                                style={styles.cancelButton}
-                                onClick={closeChangeLogin}
-                                disabled={changingLogin}
+                                style={
+                                    styles.cancelButton
+                                }
+                                onClick={
+                                    closeChangeLogin
+                                }
+                                disabled={
+                                    changingLogin
+                                }
                             >
                                 Cancel
                             </button>
 
                             <button
-                                style={styles.saveLoginButton}
-                                onClick={changeAdminLogin}
-                                disabled={changingLogin}
+                                style={
+                                    styles.saveLoginButton
+                                }
+                                onClick={
+                                    changeAdminLogin
+                                }
+                                disabled={
+                                    changingLogin
+                                }
                             >
-                                {changingLogin
-                                    ? "Saving..."
-                                    : "💾 Save Login Changes"}
+                                {
+                                    changingLogin
+                                        ? "Saving..."
+                                        : "💾 Save Login Changes"
+                                }
                             </button>
 
                         </div>
@@ -1228,21 +1654,41 @@ function Admin() {
 
                 {showSettings && (
 
-                    <div style={styles.settingsCard}>
+                    <div
+                        style={
+                            styles.settingsCard
+                        }
+                    >
 
-                        <div style={styles.settingsHeader}>
+                        <div
+                            style={
+                                styles.settingsHeader
+                            }
+                        >
 
                             <div>
 
-                                <p style={styles.eyebrow}>
+                                <p
+                                    style={
+                                        styles.eyebrow
+                                    }
+                                >
                                     PLATFORM CONTROL
                                 </p>
 
-                                <h2 style={styles.settingsTitle}>
+                                <h2
+                                    style={
+                                        styles.settingsTitle
+                                    }
+                                >
                                     ⚙️ Edit Platform Settings
                                 </h2>
 
-                                <p style={styles.settingsDescription}>
+                                <p
+                                    style={
+                                        styles.settingsDescription
+                                    }
+                                >
                                     Manage TutorHub branding,
                                     subscription and banking details.
                                 </p>
@@ -1250,19 +1696,31 @@ function Admin() {
                             </div>
 
                             <button
-                                style={styles.closeButton}
-                                onClick={closeSettings}
+                                style={
+                                    styles.closeButton
+                                }
+                                onClick={
+                                    closeSettings
+                                }
                             >
                                 ✕
                             </button>
 
                         </div>
 
-                        <div style={styles.formGrid}>
+                        <div
+                            style={
+                                styles.formGrid
+                            }
+                        >
 
                             <div>
 
-                                <label style={styles.label}>
+                                <label
+                                    style={
+                                        styles.label
+                                    }
+                                >
                                     Platform Name
                                 </label>
 
@@ -1270,19 +1728,26 @@ function Admin() {
                                     type="text"
                                     name="platformName"
                                     value={
-                                        platformSettings.platformName
+                                        platformSettings
+                                            .platformName
                                     }
                                     onChange={
                                         handleSettingsChange
                                     }
-                                    style={styles.input}
+                                    style={
+                                        styles.input
+                                    }
                                 />
 
                             </div>
 
                             <div>
 
-                                <label style={styles.label}>
+                                <label
+                                    style={
+                                        styles.label
+                                    }
+                                >
                                     Tagline
                                 </label>
 
@@ -1290,19 +1755,26 @@ function Admin() {
                                     type="text"
                                     name="tagline"
                                     value={
-                                        platformSettings.tagline
+                                        platformSettings
+                                            .tagline
                                     }
                                     onChange={
                                         handleSettingsChange
                                     }
-                                    style={styles.input}
+                                    style={
+                                        styles.input
+                                    }
                                 />
 
                             </div>
 
                             <div>
 
-                                <label style={styles.label}>
+                                <label
+                                    style={
+                                        styles.label
+                                    }
+                                >
                                     TutorHub Monthly Subscription
                                 </label>
 
@@ -1310,19 +1782,26 @@ function Admin() {
                                     type="number"
                                     name="monthlySubscription"
                                     value={
-                                        platformSettings.monthlySubscription
+                                        platformSettings
+                                            .monthlySubscription
                                     }
                                     onChange={
                                         handleSettingsChange
                                     }
-                                    style={styles.input}
+                                    style={
+                                        styles.input
+                                    }
                                 />
 
                             </div>
 
                             <div>
 
-                                <label style={styles.label}>
+                                <label
+                                    style={
+                                        styles.label
+                                    }
+                                >
                                     Currency
                                 </label>
 
@@ -1330,46 +1809,63 @@ function Admin() {
                                     type="text"
                                     name="currency"
                                     value={
-                                        platformSettings.currency
+                                        platformSettings
+                                            .currency
                                     }
                                     onChange={
                                         handleSettingsChange
                                     }
-                                    style={styles.input}
+                                    style={
+                                        styles.input
+                                    }
                                 />
 
                             </div>
 
                             <div>
 
-                                <label style={styles.label}>
+                                <label
+                                    style={
+                                        styles.label
+                                    }
+                                >
                                     Primary Colour
                                 </label>
 
-                                <div style={styles.colorInputRow}>
+                                <div
+                                    style={
+                                        styles.colorInputRow
+                                    }
+                                >
 
                                     <input
                                         type="color"
                                         name="primaryColor"
                                         value={
-                                            platformSettings.primaryColor
+                                            platformSettings
+                                                .primaryColor
                                         }
                                         onChange={
                                             handleSettingsChange
                                         }
-                                        style={styles.colorPicker}
+                                        style={
+                                            styles.colorPicker
+                                        }
                                     />
 
                                     <input
                                         type="text"
                                         name="primaryColor"
                                         value={
-                                            platformSettings.primaryColor
+                                            platformSettings
+                                                .primaryColor
                                         }
                                         onChange={
                                             handleSettingsChange
                                         }
-                                        style={styles.colorTextInput}
+                                        style={
+                                            styles.colorTextInput
+                                        }
                                     />
 
                                 </div>
@@ -1378,34 +1874,48 @@ function Admin() {
 
                             <div>
 
-                                <label style={styles.label}>
+                                <label
+                                    style={
+                                        styles.label
+                                    }
+                                >
                                     Secondary Colour
                                 </label>
 
-                                <div style={styles.colorInputRow}>
+                                <div
+                                    style={
+                                        styles.colorInputRow
+                                    }
+                                >
 
                                     <input
                                         type="color"
                                         name="secondaryColor"
                                         value={
-                                            platformSettings.secondaryColor
+                                            platformSettings
+                                                .secondaryColor
                                         }
                                         onChange={
                                             handleSettingsChange
                                         }
-                                        style={styles.colorPicker}
+                                        style={
+                                            styles.colorPicker
+                                        }
                                     />
 
                                     <input
                                         type="text"
                                         name="secondaryColor"
                                         value={
-                                            platformSettings.secondaryColor
+                                            platformSettings
+                                                .secondaryColor
                                         }
                                         onChange={
                                             handleSettingsChange
                                         }
-                                        style={styles.colorTextInput}
+                                        style={
+                                            styles.colorTextInput
+                                        }
                                     />
 
                                 </div>
@@ -1414,29 +1924,51 @@ function Admin() {
 
                         </div>
 
-                        {/* BANKING */}
+                        <div
+                            style={
+                                styles.bankCard
+                            }
+                        >
 
-                        <div style={styles.bankCard}>
-
-                            <p style={styles.eyebrow}>
+                            <p
+                                style={
+                                    styles.eyebrow
+                                }
+                            >
                                 TUTORHUB PAYMENTS
                             </p>
 
-                            <h2 style={styles.bankTitle}>
+                            <h2
+                                style={
+                                    styles.bankTitle
+                                }
+                            >
                                 🏦 TutorHub Banking Details
                             </h2>
 
-                            <p style={styles.bankDescription}>
+                            <p
+                                style={
+                                    styles.bankDescription
+                                }
+                            >
                                 These are the banking details
                                 tuition centre owners will use
                                 to pay TutorHub.
                             </p>
 
-                            <div style={styles.formGrid}>
+                            <div
+                                style={
+                                    styles.formGrid
+                                }
+                            >
 
                                 <div>
 
-                                    <label style={styles.label}>
+                                    <label
+                                        style={
+                                            styles.label
+                                        }
+                                    >
                                         Bank Name
                                     </label>
 
@@ -1444,20 +1976,27 @@ function Admin() {
                                         type="text"
                                         name="tutorhubBankName"
                                         value={
-                                            platformSettings.tutorhubBankName
+                                            platformSettings
+                                                .tutorhubBankName
                                         }
                                         onChange={
                                             handleSettingsChange
                                         }
                                         placeholder="e.g. Capitec Bank"
-                                        style={styles.input}
+                                        style={
+                                            styles.input
+                                        }
                                     />
 
                                 </div>
 
                                 <div>
 
-                                    <label style={styles.label}>
+                                    <label
+                                        style={
+                                            styles.label
+                                        }
+                                    >
                                         Account Holder
                                     </label>
 
@@ -1465,20 +2004,27 @@ function Admin() {
                                         type="text"
                                         name="tutorhubAccountHolder"
                                         value={
-                                            platformSettings.tutorhubAccountHolder
+                                            platformSettings
+                                                .tutorhubAccountHolder
                                         }
                                         onChange={
                                             handleSettingsChange
                                         }
                                         placeholder="e.g. TutorHub"
-                                        style={styles.input}
+                                        style={
+                                            styles.input
+                                        }
                                     />
 
                                 </div>
 
                                 <div>
 
-                                    <label style={styles.label}>
+                                    <label
+                                        style={
+                                            styles.label
+                                        }
+                                    >
                                         Account Number
                                     </label>
 
@@ -1486,20 +2032,27 @@ function Admin() {
                                         type="text"
                                         name="tutorhubAccountNumber"
                                         value={
-                                            platformSettings.tutorhubAccountNumber
+                                            platformSettings
+                                                .tutorhubAccountNumber
                                         }
                                         onChange={
                                             handleSettingsChange
                                         }
                                         placeholder="Account number"
-                                        style={styles.input}
+                                        style={
+                                            styles.input
+                                        }
                                     />
 
                                 </div>
 
                                 <div>
 
-                                    <label style={styles.label}>
+                                    <label
+                                        style={
+                                            styles.label
+                                        }
+                                    >
                                         Branch Code
                                     </label>
 
@@ -1507,20 +2060,27 @@ function Admin() {
                                         type="text"
                                         name="tutorhubBranchCode"
                                         value={
-                                            platformSettings.tutorhubBranchCode
+                                            platformSettings
+                                                .tutorhubBranchCode
                                         }
                                         onChange={
                                             handleSettingsChange
                                         }
                                         placeholder="Branch code"
-                                        style={styles.input}
+                                        style={
+                                            styles.input
+                                        }
                                     />
 
                                 </div>
 
                             </div>
 
-                            <div style={styles.bankStatus}>
+                            <div
+                                style={
+                                    styles.bankStatus
+                                }
+                            >
 
                                 <span>
                                     Banking details status
@@ -1541,11 +2101,19 @@ function Admin() {
 
                             </div>
 
-                            <div style={styles.adminProofSection}>
+                            <div
+                                style={
+                                    styles.adminProofSection
+                                }
+                            >
 
                                 <div>
 
-                                    <span style={styles.infoLabel}>
+                                    <span
+                                        style={
+                                            styles.infoLabel
+                                        }
+                                    >
                                         Latest Owner Payment Proof
                                     </span>
 
@@ -1562,10 +2130,14 @@ function Admin() {
 
                                 </div>
 
-                                {platformSettings.tutorhubPaymentProof && (
+                                {
+                                    platformSettings
+                                        .tutorhubPaymentProof && (
 
                                     <button
-                                        style={styles.secondaryButton}
+                                        style={
+                                            styles.secondaryButton
+                                        }
                                         onClick={() =>
                                             viewPaymentProof(
                                                 platformSettings
@@ -1582,11 +2154,17 @@ function Admin() {
 
                         </div>
 
-                        {/* PREVIEW */}
+                        <div
+                            style={
+                                styles.previewBox
+                            }
+                        >
 
-                        <div style={styles.previewBox}>
-
-                            <span style={styles.infoLabel}>
+                            <span
+                                style={
+                                    styles.infoLabel
+                                }
+                            >
                                 Colour Preview
                             </span>
 
@@ -1594,18 +2172,21 @@ function Admin() {
                                 style={{
                                     ...styles.preview,
                                     background:
-                                        platformSettings.secondaryColor
+                                        platformSettings
+                                            .secondaryColor
                                 }}
                             >
 
                                 <strong
                                     style={{
                                         color:
-                                            platformSettings.primaryColor
+                                            platformSettings
+                                                .primaryColor
                                     }}
                                 >
                                     {
-                                        platformSettings.platformName
+                                        platformSettings
+                                            .platformName
                                     }
                                 </strong>
 
@@ -1617,22 +2198,36 @@ function Admin() {
 
                         </div>
 
-                        <div style={styles.settingsActions}>
+                        <div
+                            style={
+                                styles.settingsActions
+                            }
+                        >
 
                             <button
-                                style={styles.cancelButton}
-                                onClick={closeSettings}
-                                disabled={savingSettings}
+                                style={
+                                    styles.cancelButton
+                                }
+                                onClick={
+                                    closeSettings
+                                }
+                                disabled={
+                                    savingSettings
+                                }
                             >
                                 Cancel
                             </button>
 
                             <button
-                                style={styles.saveButton}
+                                style={
+                                    styles.saveButton
+                                }
                                 onClick={
                                     savePlatformSettings
                                 }
-                                disabled={savingSettings}
+                                disabled={
+                                    savingSettings
+                                }
                             >
                                 {
                                     savingSettings
@@ -1651,21 +2246,43 @@ function Admin() {
                     OVERVIEW
                 ===================================== */}
 
-                <div style={styles.statsGrid}>
+                <div
+                    style={
+                        styles.statsGrid
+                    }
+                >
 
-                    <div style={styles.statCard}>
+                    <div
+                        style={
+                            styles.statCard
+                        }
+                    >
 
-                        <span style={styles.statIcon}>
+                        <span
+                            style={
+                                styles.statIcon
+                            }
+                        >
                             🏫
                         </span>
 
                         <div>
 
-                            <span style={styles.statNumber}>
-                                {programs.length}
+                            <span
+                                style={
+                                    styles.statNumber
+                                }
+                            >
+                                {
+                                    programs.length
+                                }
                             </span>
 
-                            <span style={styles.statLabel}>
+                            <span
+                                style={
+                                    styles.statLabel
+                                }
+                            >
                                 Tuition Centres
                             </span>
 
@@ -1673,15 +2290,27 @@ function Admin() {
 
                     </div>
 
-                    <div style={styles.statCard}>
+                    <div
+                        style={
+                            styles.statCard
+                        }
+                    >
 
-                        <span style={styles.statIcon}>
+                        <span
+                            style={
+                                styles.statIcon
+                            }
+                        >
                             🟢
                         </span>
 
                         <div>
 
-                            <span style={styles.statNumber}>
+                            <span
+                                style={
+                                    styles.statNumber
+                                }
+                            >
                                 {
                                     programs.filter(
                                         program =>
@@ -1691,7 +2320,11 @@ function Admin() {
                                 }
                             </span>
 
-                            <span style={styles.statLabel}>
+                            <span
+                                style={
+                                    styles.statLabel
+                                }
+                            >
                                 Active Centres
                             </span>
 
@@ -1699,15 +2332,27 @@ function Admin() {
 
                     </div>
 
-                    <div style={styles.statCard}>
+                    <div
+                        style={
+                            styles.statCard
+                        }
+                    >
 
-                        <span style={styles.statIcon}>
+                        <span
+                            style={
+                                styles.statIcon
+                            }
+                        >
                             ⏳
                         </span>
 
                         <div>
 
-                            <span style={styles.statNumber}>
+                            <span
+                                style={
+                                    styles.statNumber
+                                }
+                            >
                                 {
                                     programs.filter(
                                         program =>
@@ -1717,7 +2362,11 @@ function Admin() {
                                 }
                             </span>
 
-                            <span style={styles.statLabel}>
+                            <span
+                                style={
+                                    styles.statLabel
+                                }
+                            >
                                 Pending Approval
                             </span>
 
@@ -1725,15 +2374,27 @@ function Admin() {
 
                     </div>
 
-                    <div style={styles.statCard}>
+                    <div
+                        style={
+                            styles.statCard
+                        }
+                    >
 
-                        <span style={styles.statIcon}>
+                        <span
+                            style={
+                                styles.statIcon
+                            }
+                        >
                             🚫
                         </span>
 
                         <div>
 
-                            <span style={styles.statNumber}>
+                            <span
+                                style={
+                                    styles.statNumber
+                                }
+                            >
                                 {
                                     programs.filter(
                                         program =>
@@ -1743,7 +2404,11 @@ function Admin() {
                                 }
                             </span>
 
-                            <span style={styles.statLabel}>
+                            <span
+                                style={
+                                    styles.statLabel
+                                }
+                            >
                                 Blocked Centres
                             </span>
 
@@ -1757,21 +2422,41 @@ function Admin() {
                     TUTORHUB PAYMENTS
                 ===================================== */}
 
-                <div style={styles.paymentsSection}>
+                <div
+                    style={
+                        styles.paymentsSection
+                    }
+                >
 
-                    <div style={styles.sectionHeader}>
+                    <div
+                        style={
+                            styles.sectionHeader
+                        }
+                    >
 
                         <div>
 
-                            <p style={styles.eyebrow}>
+                            <p
+                                style={
+                                    styles.eyebrow
+                                }
+                            >
                                 PLATFORM REVENUE
                             </p>
 
-                            <h2 style={styles.sectionTitle}>
+                            <h2
+                                style={
+                                    styles.sectionTitle
+                                }
+                            >
                                 🏦 TutorHub Payments
                             </h2>
 
-                            <p style={styles.sectionDescription}>
+                            <p
+                                style={
+                                    styles.sectionDescription
+                                }
+                            >
                                 Review subscription payments
                                 submitted by tuition centre owners.
                             </p>
@@ -1779,9 +2464,15 @@ function Admin() {
                         </div>
 
                         <button
-                            style={styles.refreshButton}
-                            onClick={fetchOwnerPayments}
-                            disabled={paymentsLoading}
+                            style={
+                                styles.refreshButton
+                            }
+                            onClick={
+                                fetchOwnerPayments
+                            }
+                            disabled={
+                                paymentsLoading
+                            }
                         >
                             {
                                 paymentsLoading
@@ -1792,25 +2483,43 @@ function Admin() {
 
                     </div>
 
-                    {/* PAYMENT STATS */}
+                    <div
+                        style={
+                            styles.paymentStatsGrid
+                        }
+                    >
 
-                    <div style={styles.paymentStatsGrid}>
+                        <div
+                            style={
+                                styles.paymentStatCard
+                            }
+                        >
 
-                        <div style={styles.paymentStatCard}>
-
-                            <span style={styles.paymentStatIcon}>
+                            <span
+                                style={
+                                    styles.paymentStatIcon
+                                }
+                            >
                                 ⏳
                             </span>
 
                             <div>
 
-                                <span style={styles.paymentStatNumber}>
+                                <span
+                                    style={
+                                        styles.paymentStatNumber
+                                    }
+                                >
                                     {
                                         pendingPayments.length
                                     }
                                 </span>
 
-                                <span style={styles.paymentStatLabel}>
+                                <span
+                                    style={
+                                        styles.paymentStatLabel
+                                    }
+                                >
                                     Pending Payments
                                 </span>
 
@@ -1818,21 +2527,37 @@ function Admin() {
 
                         </div>
 
-                        <div style={styles.paymentStatCard}>
+                        <div
+                            style={
+                                styles.paymentStatCard
+                            }
+                        >
 
-                            <span style={styles.paymentStatIcon}>
+                            <span
+                                style={
+                                    styles.paymentStatIcon
+                                }
+                            >
                                 🟢
                             </span>
 
                             <div>
 
-                                <span style={styles.paymentStatNumber}>
+                                <span
+                                    style={
+                                        styles.paymentStatNumber
+                                    }
+                                >
                                     {
                                         paidPayments.length
                                     }
                                 </span>
 
-                                <span style={styles.paymentStatLabel}>
+                                <span
+                                    style={
+                                        styles.paymentStatLabel
+                                    }
+                                >
                                     Paid Payments
                                 </span>
 
@@ -1840,21 +2565,37 @@ function Admin() {
 
                         </div>
 
-                        <div style={styles.paymentStatCard}>
+                        <div
+                            style={
+                                styles.paymentStatCard
+                            }
+                        >
 
-                            <span style={styles.paymentStatIcon}>
+                            <span
+                                style={
+                                    styles.paymentStatIcon
+                                }
+                            >
                                 🔴
                             </span>
 
                             <div>
 
-                                <span style={styles.paymentStatNumber}>
+                                <span
+                                    style={
+                                        styles.paymentStatNumber
+                                    }
+                                >
                                     {
                                         rejectedPayments.length
                                     }
                                 </span>
 
-                                <span style={styles.paymentStatLabel}>
+                                <span
+                                    style={
+                                        styles.paymentStatLabel
+                                    }
+                                >
                                     Rejected Payments
                                 </span>
 
@@ -1862,21 +2603,39 @@ function Admin() {
 
                         </div>
 
-                        <div style={styles.paymentStatCard}>
+                        <div
+                            style={
+                                styles.paymentStatCard
+                            }
+                        >
 
-                            <span style={styles.paymentStatIcon}>
+                            <span
+                                style={
+                                    styles.paymentStatIcon
+                                }
+                            >
                                 💰
                             </span>
 
                             <div>
 
-                                <span style={styles.paymentStatNumber}>
+                                <span
+                                    style={
+                                        styles.paymentStatNumber
+                                    }
+                                >
                                     R{
-                                        totalPaid.toFixed(2)
+                                        totalPaid.toFixed(
+                                            2
+                                        )
                                     }
                                 </span>
 
-                                <span style={styles.paymentStatLabel}>
+                                <span
+                                    style={
+                                        styles.paymentStatLabel
+                                    }
+                                >
                                     Total Paid
                                 </span>
 
@@ -1886,344 +2645,381 @@ function Admin() {
 
                     </div>
 
-                    {/* PAYMENTS */}
+                    {
+                        paymentsLoading ? (
 
-                    {paymentsLoading ? (
+                            <div
+                                style={
+                                    styles.paymentLoading
+                                }
+                            >
 
-                        <div style={styles.paymentLoading}>
+                                <div
+                                    style={
+                                        styles.paymentLoadingIcon
+                                    }
+                                >
+                                    💳
+                                </div>
 
-                            <div style={styles.paymentLoadingIcon}>
-                                💳
+                                <h3>
+                                    Loading payments...
+                                </h3>
+
+                                <p>
+                                    Fetching TutorHub payment
+                                    submissions.
+                                </p>
+
                             </div>
 
-                            <h3>
-                                Loading payments...
-                            </h3>
+                        ) : ownerPayments.length ===
+                            0 ? (
 
-                            <p>
-                                Fetching TutorHub payment
-                                submissions.
-                            </p>
+                            <div
+                                style={
+                                    styles.emptyPaymentState
+                                }
+                            >
 
-                        </div>
+                                <div
+                                    style={
+                                        styles.emptyIcon
+                                    }
+                                >
+                                    💳
+                                </div>
 
-                    ) : ownerPayments.length === 0 ? (
+                                <h3>
+                                    No TutorHub payments yet
+                                </h3>
 
-                        <div style={styles.emptyPaymentState}>
+                                <p>
+                                    Payments submitted by tuition
+                                    centre owners will appear here.
+                                </p>
 
-                            <div style={styles.emptyIcon}>
-                                💳
                             </div>
 
-                            <h3>
-                                No TutorHub payments yet
-                            </h3>
+                        ) : (
 
-                            <p>
-                                Payments submitted by tuition
-                                centre owners will appear here.
-                            </p>
+                            <div
+                                style={
+                                    styles.paymentList
+                                }
+                            >
 
-                        </div>
+                                {
+                                    ownerPayments.map(
+                                        payment => {
 
-                    ) : (
+                                            const owner =
+                                                payment.ownerId;
 
-                        <div style={styles.paymentList}>
+                                            const program =
+                                                payment.programId;
 
-                            {ownerPayments.map(payment => {
-
-                                const owner =
-                                    payment.ownerId;
-
-                                const program =
-                                    payment.programId;
-
-                                return (
-
-                                    <div
-                                        key={payment._id}
-                                        style={styles.paymentCard}
-                                    >
-
-                                        <div
-                                            style={
-                                                styles.paymentCardHeader
-                                            }
-                                        >
-
-                                            <div
-                                                style={
-                                                    styles.paymentIdentity
-                                                }
-                                            >
+                                            return (
 
                                                 <div
+                                                    key={
+                                                        payment._id
+                                                    }
                                                     style={
-                                                        styles.paymentIcon
+                                                        styles.paymentCard
                                                     }
                                                 >
-                                                    💳
-                                                </div>
 
-                                                <div>
-
-                                                    <h3
+                                                    <div
                                                         style={
-                                                            styles.paymentOwnerName
+                                                            styles.paymentCardHeader
                                                         }
                                                     >
-                                                        {
-                                                            owner
-                                                                ? `${owner.name || ""} ${owner.surname || ""}`.trim()
-                                                                : "Unknown Owner"
-                                                        }
-                                                    </h3>
 
-                                                    <p
+                                                        <div
+                                                            style={
+                                                                styles.paymentIdentity
+                                                            }
+                                                        >
+
+                                                            <div
+                                                                style={
+                                                                    styles.paymentIcon
+                                                                }
+                                                            >
+                                                                💳
+                                                            </div>
+
+                                                            <div>
+
+                                                                <h3
+                                                                    style={
+                                                                        styles.paymentOwnerName
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        owner
+                                                                            ? `${owner.name || ""} ${owner.surname || ""}`.trim()
+                                                                            : "Unknown Owner"
+                                                                    }
+                                                                </h3>
+
+                                                                <p
+                                                                    style={
+                                                                        styles.paymentEmail
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        owner?.email ||
+                                                                        owner?.username ||
+                                                                        "No contact details"
+                                                                    }
+                                                                </p>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                        <span
+                                                            style={
+                                                                payment.status ===
+                                                                    "Paid"
+                                                                    ? styles.paidBadge
+                                                                    : payment.status ===
+                                                                        "Rejected"
+                                                                        ? styles.rejectedBadge
+                                                                        : styles.paymentPendingBadge
+                                                            }
+                                                        >
+                                                            {
+                                                                payment.status ===
+                                                                    "Paid"
+                                                                    ? "🟢 Paid"
+                                                                    : payment.status ===
+                                                                        "Rejected"
+                                                                        ? "🔴 Rejected"
+                                                                        : "🟡 Pending"
+                                                            }
+                                                        </span>
+
+                                                    </div>
+
+                                                    <div
                                                         style={
-                                                            styles.paymentEmail
+                                                            styles.paymentDetailsGrid
                                                         }
                                                     >
-                                                        {
-                                                            owner?.email ||
-                                                            owner?.username ||
-                                                            "No contact details"
+
+                                                        <div
+                                                            style={
+                                                                styles.paymentDetail
+                                                            }
+                                                        >
+
+                                                            <span
+                                                                style={
+                                                                    styles.infoLabel
+                                                                }
+                                                            >
+                                                                Tuition Centre
+                                                            </span>
+
+                                                            <strong>
+                                                                {
+                                                                    program?.name ||
+                                                                    "Unknown Centre"
+                                                                }
+                                                            </strong>
+
+                                                        </div>
+
+                                                        <div
+                                                            style={
+                                                                styles.paymentDetail
+                                                            }
+                                                        >
+
+                                                            <span
+                                                                style={
+                                                                    styles.infoLabel
+                                                                }
+                                                            >
+                                                                Payment Period
+                                                            </span>
+
+                                                            <strong>
+                                                                {
+                                                                    payment.month ||
+                                                                    "—"
+                                                                }{" "}
+                                                                {
+                                                                    payment.year ||
+                                                                    ""
+                                                                }
+                                                            </strong>
+
+                                                        </div>
+
+                                                        <div
+                                                            style={
+                                                                styles.paymentDetail
+                                                            }
+                                                        >
+
+                                                            <span
+                                                                style={
+                                                                    styles.infoLabel
+                                                                }
+                                                            >
+                                                                Amount Paid
+                                                            </span>
+
+                                                            <strong
+                                                                style={
+                                                                    styles.amountText
+                                                                }
+                                                            >
+                                                                R{
+                                                                    Number(
+                                                                        payment.amount ||
+                                                                        0
+                                                                    ).toFixed(
+                                                                        2
+                                                                    )
+                                                                }
+                                                            </strong>
+
+                                                        </div>
+
+                                                        <div
+                                                            style={
+                                                                styles.paymentDetail
+                                                            }
+                                                        >
+
+                                                            <span
+                                                                style={
+                                                                    styles.infoLabel
+                                                                }
+                                                            >
+                                                                Submitted
+                                                            </span>
+
+                                                            <strong>
+                                                                {
+                                                                    formatPaymentDate(
+                                                                        payment.createdAt
+                                                                    )
+                                                                }
+                                                            </strong>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div
+                                                        style={
+                                                            styles.paymentProofRow
                                                         }
-                                                    </p>
+                                                    >
+
+                                                        <div>
+
+                                                            <span
+                                                                style={
+                                                                    styles.infoLabel
+                                                                }
+                                                            >
+                                                                Payment Proof
+                                                            </span>
+
+                                                            <strong>
+                                                                {
+                                                                    payment.proof
+                                                                        ? "📄 Proof uploaded"
+                                                                        : "No proof uploaded"
+                                                                }
+                                                            </strong>
+
+                                                        </div>
+
+                                                        <div
+                                                            style={
+                                                                styles.paymentActions
+                                                            }
+                                                        >
+
+                                                            <button
+                                                                style={
+                                                                    payment.proof
+                                                                        ? styles.secondaryButton
+                                                                        : styles.disabledButton
+                                                                }
+                                                                disabled={
+                                                                    !payment.proof
+                                                                }
+                                                                onClick={() =>
+                                                                    viewPaymentProof(
+                                                                        payment.proof
+                                                                    )
+                                                                }
+                                                            >
+                                                                📄 View Proof
+                                                            </button>
+
+                                                            {
+                                                                payment.status ===
+                                                                    "Pending" && (
+
+                                                                    <>
+
+                                                                        <button
+                                                                            style={
+                                                                                styles.paymentApproveButton
+                                                                            }
+                                                                            onClick={() =>
+                                                                                approveOwnerPayment(
+                                                                                    payment._id
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            ✅ Approve
+                                                                        </button>
+
+                                                                        <button
+                                                                            style={
+                                                                                styles.paymentRejectButton
+                                                                            }
+                                                                            onClick={() =>
+                                                                                rejectOwnerPayment(
+                                                                                    payment._id
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            ❌ Reject
+                                                                        </button>
+
+                                                                    </>
+
+                                                                )
+                                                            }
+
+                                                        </div>
+
+                                                    </div>
 
                                                 </div>
 
-                                            </div>
+                                            );
 
-                                            <span
-                                                style={
-                                                    payment.status === "Paid"
-                                                        ? styles.paidBadge
-                                                        : payment.status === "Rejected"
-                                                            ? styles.rejectedBadge
-                                                            : styles.paymentPendingBadge
-                                                }
-                                            >
-                                                {
-                                                    payment.status === "Paid"
-                                                        ? "🟢 Paid"
-                                                        : payment.status === "Rejected"
-                                                            ? "🔴 Rejected"
-                                                            : "🟡 Pending"
-                                                }
-                                            </span>
+                                        }
+                                    )
+                                }
 
-                                        </div>
+                            </div>
 
-                                        <div
-                                            style={
-                                                styles.paymentDetailsGrid
-                                            }
-                                        >
-
-                                            <div
-                                                style={
-                                                    styles.paymentDetail
-                                                }
-                                            >
-
-                                                <span
-                                                    style={
-                                                        styles.infoLabel
-                                                    }
-                                                >
-                                                    Tuition Centre
-                                                </span>
-
-                                                <strong>
-                                                    {
-                                                        program?.name ||
-                                                        "Unknown Centre"
-                                                    }
-                                                </strong>
-
-                                            </div>
-
-                                            <div
-                                                style={
-                                                    styles.paymentDetail
-                                                }
-                                            >
-
-                                                <span
-                                                    style={
-                                                        styles.infoLabel
-                                                    }
-                                                >
-                                                    Payment Period
-                                                </span>
-
-                                                <strong>
-                                                    {
-                                                        payment.month ||
-                                                        "—"
-                                                    }{" "}
-                                                    {
-                                                        payment.year ||
-                                                        ""
-                                                    }
-                                                </strong>
-
-                                            </div>
-
-                                            <div
-                                                style={
-                                                    styles.paymentDetail
-                                                }
-                                            >
-
-                                                <span
-                                                    style={
-                                                        styles.infoLabel
-                                                    }
-                                                >
-                                                    Amount Paid
-                                                </span>
-
-                                                <strong
-                                                    style={
-                                                        styles.amountText
-                                                    }
-                                                >
-                                                    R{
-                                                        Number(
-                                                            payment.amount ||
-                                                            0
-                                                        ).toFixed(2)
-                                                    }
-                                                </strong>
-
-                                            </div>
-
-                                            <div
-                                                style={
-                                                    styles.paymentDetail
-                                                }
-                                            >
-
-                                                <span
-                                                    style={
-                                                        styles.infoLabel
-                                                    }
-                                                >
-                                                    Submitted
-                                                </span>
-
-                                                <strong>
-                                                    {
-                                                        formatPaymentDate(
-                                                            payment.createdAt
-                                                        )
-                                                    }
-                                                </strong>
-
-                                            </div>
-
-                                        </div>
-
-                                        <div
-                                            style={
-                                                styles.paymentProofRow
-                                            }
-                                        >
-
-                                            <div>
-
-                                                <span
-                                                    style={
-                                                        styles.infoLabel
-                                                    }
-                                                >
-                                                    Payment Proof
-                                                </span>
-
-                                                <strong>
-                                                    {
-                                                        payment.proof
-                                                            ? "📄 Proof uploaded"
-                                                            : "No proof uploaded"
-                                                    }
-                                                </strong>
-
-                                            </div>
-
-                                            <div
-                                                style={
-                                                    styles.paymentActions
-                                                }
-                                            >
-
-                                                <button
-                                                    style={
-                                                        payment.proof
-                                                            ? styles.secondaryButton
-                                                            : styles.disabledButton
-                                                    }
-                                                    disabled={
-                                                        !payment.proof
-                                                    }
-                                                    onClick={() =>
-                                                        viewPaymentProof(
-                                                            payment.proof
-                                                        )
-                                                    }
-                                                >
-                                                    📄 View Proof
-                                                </button>
-
-                                                {payment.status ===
-                                                    "Pending" && (
-
-                                                    <>
-
-                                                        <button
-                                                            style={
-                                                                styles.paymentApproveButton
-                                                            }
-                                                            onClick={() =>
-                                                                approveOwnerPayment(
-                                                                    payment._id
-                                                                )
-                                                            }
-                                                        >
-                                                            ✅ Approve
-                                                        </button>
-
-                                                        <button
-                                                            style={
-                                                                styles.paymentRejectButton
-                                                            }
-                                                            onClick={() =>
-                                                                rejectOwnerPayment(
-                                                                    payment._id
-                                                                )
-                                                            }
-                                                        >
-                                                            ❌ Reject
-                                                        </button>
-
-                                                    </>
-
-                                                )}
-
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-                                );
-
-                            })}
-
-                        </div>
-
-                    )}
+                        )
+                    }
 
                 </div>
 
@@ -2231,380 +3027,449 @@ function Admin() {
                     TUITION CENTRES
                 ===================================== */}
 
-                <div style={styles.section}>
+                <div
+                    style={
+                        styles.section
+                    }
+                >
 
-                    <div style={styles.sectionHeader}>
+                    <div
+                        style={
+                            styles.sectionHeader
+                        }
+                    >
 
                         <div>
 
-                            <h2 style={styles.sectionTitle}>
+                            <h2
+                                style={
+                                    styles.sectionTitle
+                                }
+                            >
                                 🏫 Tuition Centres
                             </h2>
 
-                            <p style={styles.sectionDescription}>
+                            <p
+                                style={
+                                    styles.sectionDescription
+                                }
+                            >
                                 View centre subscriptions,
                                 payment proofs and platform usage.
                             </p>
 
                         </div>
 
-                        <span style={styles.countBadge}>
-                            {programs.length}
+                        <span
+                            style={
+                                styles.countBadge
+                            }
+                        >
+                            {
+                                programs.length
+                            }
                         </span>
 
                     </div>
 
-                    {programs.length === 0 ? (
+                    {
+                        programs.length ===
+                            0 ? (
 
-                        <div style={styles.emptyState}>
+                            <div
+                                style={
+                                    styles.emptyState
+                                }
+                            >
 
-                            <div style={styles.emptyIcon}>
-                                🏫
+                                <div
+                                    style={
+                                        styles.emptyIcon
+                                    }
+                                >
+                                    🏫
+                                </div>
+
+                                <h3>
+                                    No tuition centres
+                                </h3>
+
+                                <p>
+                                    Registered tuition centres
+                                    will appear here.
+                                </p>
+
                             </div>
 
-                            <h3>
-                                No tuition centres
-                            </h3>
+                        ) : (
 
-                            <p>
-                                Registered tuition centres
-                                will appear here.
-                            </p>
+                            <div
+                                style={
+                                    styles.grid
+                                }
+                            >
 
-                        </div>
+                                {
+                                    programs.map(
+                                        program => {
 
-                    ) : (
+                                            const owner =
+                                                program.owner ||
+                                                program.ownerId;
 
-                        <div style={styles.grid}>
+                                            return (
 
-                            {programs.map(program => {
-
-                                const owner =
-                                    program.owner ||
-                                    program.ownerId;
-
-                                return (
-
-                                    <div
-                                        key={program._id}
-                                        style={styles.card}
-                                    >
-
-                                        <div
-                                            style={
-                                                styles.cardHeader
-                                            }
-                                        >
-
-                                            <div
-                                                style={
-                                                    styles.centreIcon
-                                                }
-                                            >
-                                                🏫
-                                            </div>
-
-                                            <div
-                                                style={{
-                                                    flex: 1
-                                                }}
-                                            >
-
-                                                <h3
+                                                <div
+                                                    key={
+                                                        program._id
+                                                    }
                                                     style={
-                                                        styles.centreName
+                                                        styles.card
                                                     }
                                                 >
-                                                    {
-                                                        program.name
-                                                    }
-                                                </h3>
 
-                                                <span
-                                                    style={
-                                                        program.status ===
-                                                        "Active"
-                                                            ? styles.activeBadge
-                                                            : program.status ===
-                                                                "Blocked"
-                                                                ? styles.blockedBadge
-                                                                : styles.pendingBadge
-                                                    }
-                                                >
-                                                    {
-                                                        program.status
-                                                    }
-                                                </span>
+                                                    <div
+                                                        style={
+                                                            styles.cardHeader
+                                                        }
+                                                    >
 
-                                            </div>
+                                                        <div
+                                                            style={
+                                                                styles.centreIcon
+                                                            }
+                                                        >
+                                                            🏫
+                                                        </div>
 
-                                        </div>
+                                                        <div
+                                                            style={{
+                                                                flex: 1
+                                                            }}
+                                                        >
 
-                                        <div
-                                            style={
-                                                styles.infoSection
-                                            }
-                                        >
+                                                            <h3
+                                                                style={
+                                                                    styles.centreName
+                                                                }
+                                                            >
+                                                                {
+                                                                    program.name
+                                                                }
+                                                            </h3>
 
-                                            <span
-                                                style={
-                                                    styles.infoLabel
-                                                }
-                                            >
-                                                Centre Owner
-                                            </span>
+                                                            <span
+                                                                style={
+                                                                    program.status ===
+                                                                        "Active"
+                                                                        ? styles.activeBadge
+                                                                        : program.status ===
+                                                                            "Blocked"
+                                                                            ? styles.blockedBadge
+                                                                            : styles.pendingBadge
+                                                                }
+                                                            >
+                                                                {
+                                                                    program.status
+                                                                }
+                                                            </span>
 
-                                            <strong>
-                                                {
-                                                    owner
-                                                        ? `${owner.name || ""} ${owner.surname || ""}`.trim()
-                                                        : "Unknown"
-                                                }
-                                            </strong>
+                                                        </div>
 
-                                            {owner?.email && (
+                                                    </div>
 
-                                                <small
-                                                    style={
-                                                        styles.muted
-                                                    }
-                                                >
-                                                    {
-                                                        owner.email
-                                                    }
-                                                </small>
+                                                    <div
+                                                        style={
+                                                            styles.infoSection
+                                                        }
+                                                    >
 
-                                            )}
+                                                        <span
+                                                            style={
+                                                                styles.infoLabel
+                                                            }
+                                                        >
+                                                            Centre Owner
+                                                        </span>
 
-                                        </div>
+                                                        <strong>
+                                                            {
+                                                                owner
+                                                                    ? `${owner.name || ""} ${owner.surname || ""}`.trim()
+                                                                    : "Unknown"
+                                                            }
+                                                        </strong>
 
-                                        <div
-                                            style={
-                                                styles.statsRow
-                                            }
-                                        >
+                                                        {
+                                                            owner?.email && (
 
-                                            <div
-                                                style={
-                                                    styles.smallStat
-                                                }
-                                            >
+                                                                <small
+                                                                    style={
+                                                                        styles.muted
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        owner.email
+                                                                    }
+                                                                </small>
 
-                                                <span
-                                                    style={
-                                                        styles.smallStatNumber
-                                                    }
-                                                >
-                                                    {
-                                                        program.learnerCount ??
-                                                        0
-                                                    }
-                                                </span>
+                                                            )
+                                                        }
 
-                                                <span
-                                                    style={
-                                                        styles.smallStatLabel
-                                                    }
-                                                >
-                                                    Learners
-                                                </span>
+                                                    </div>
 
-                                            </div>
+                                                    <div
+                                                        style={
+                                                            styles.statsRow
+                                                        }
+                                                    >
 
-                                            <div
-                                                style={
-                                                    styles.smallStat
-                                                }
-                                            >
+                                                        <div
+                                                            style={
+                                                                styles.smallStat
+                                                            }
+                                                        >
 
-                                                <span
-                                                    style={
-                                                        styles.smallStatNumber
-                                                    }
-                                                >
-                                                    {
-                                                        program.tutorCount ??
-                                                        0
-                                                    }
-                                                </span>
+                                                            <span
+                                                                style={
+                                                                    styles.smallStatNumber
+                                                                }
+                                                            >
+                                                                {
+                                                                    program.learnerCount ??
+                                                                    0
+                                                                }
+                                                            </span>
 
-                                                <span
-                                                    style={
-                                                        styles.smallStatLabel
-                                                    }
-                                                >
-                                                    Tutors
-                                                </span>
+                                                            <span
+                                                                style={
+                                                                    styles.smallStatLabel
+                                                                }
+                                                            >
+                                                                Learners
+                                                            </span>
 
-                                            </div>
+                                                        </div>
 
-                                        </div>
+                                                        <div
+                                                            style={
+                                                                styles.smallStat
+                                                            }
+                                                        >
 
-                                        <div
-                                            style={
-                                                styles.subscriptionBox
-                                            }
-                                        >
+                                                            <span
+                                                                style={
+                                                                    styles.smallStatNumber
+                                                                }
+                                                            >
+                                                                {
+                                                                    program.tutorCount ??
+                                                                    0
+                                                                }
+                                                            </span>
 
-                                            <div>
+                                                            <span
+                                                                style={
+                                                                    styles.smallStatLabel
+                                                                }
+                                                            >
+                                                                Tutors
+                                                            </span>
 
-                                                <span
-                                                    style={
-                                                        styles.infoLabel
-                                                    }
-                                                >
-                                                    Subscription
-                                                </span>
+                                                        </div>
 
-                                                <strong>
-                                                    {
-                                                        program.subscriptionStatus ||
-                                                        "—"
-                                                    }
-                                                </strong>
+                                                    </div>
 
-                                            </div>
+                                                    <div
+                                                        style={
+                                                            styles.subscriptionBox
+                                                        }
+                                                    >
 
-                                            <div>
+                                                        <div>
 
-                                                <span
-                                                    style={
-                                                        styles.infoLabel
-                                                    }
-                                                >
-                                                    Monthly Fee
-                                                </span>
+                                                            <span
+                                                                style={
+                                                                    styles.infoLabel
+                                                                }
+                                                            >
+                                                                Subscription
+                                                            </span>
 
-                                                <strong>
-                                                    R{
-                                                        Number(
-                                                            program.monthlyFee ||
-                                                            0
-                                                        ).toFixed(2)
-                                                    }
-                                                </strong>
+                                                            <strong>
+                                                                {
+                                                                    program.subscriptionStatus ||
+                                                                    "—"
+                                                                }
+                                                            </strong>
 
-                                            </div>
+                                                        </div>
 
-                                        </div>
+                                                        <div>
 
-                                        <div
-                                            style={
-                                                styles.paymentSection
-                                            }
-                                        >
+                                                            <span
+                                                                style={
+                                                                    styles.infoLabel
+                                                                }
+                                                            >
+                                                                Monthly Fee
+                                                            </span>
 
-                                            <div>
+                                                            <strong>
+                                                                R{
+                                                                    Number(
+                                                                        program.monthlyFee ||
+                                                                        0
+                                                                    ).toFixed(
+                                                                        2
+                                                                    )
+                                                                }
+                                                            </strong>
 
-                                                <span
-                                                    style={
-                                                        styles.infoLabel
-                                                    }
-                                                >
-                                                    Payment Proof
-                                                </span>
+                                                        </div>
 
-                                                <strong>
-                                                    {
-                                                        program.paymentProof
-                                                            ? "Uploaded"
-                                                            : "Not uploaded"
-                                                    }
-                                                </strong>
+                                                    </div>
 
-                                            </div>
+                                                    <div
+                                                        style={
+                                                            styles.paymentSection
+                                                        }
+                                                    >
 
-                                            <button
-                                                style={
-                                                    program.paymentProof
-                                                        ? styles.secondaryButton
-                                                        : styles.disabledButton
-                                                }
-                                                disabled={
-                                                    !program.paymentProof
-                                                }
-                                                onClick={() =>
-                                                    viewPaymentProof(
-                                                        program.paymentProof
-                                                    )
-                                                }
-                                            >
-                                                📄 View Proof
-                                            </button>
+                                                        <div>
 
-                                        </div>
+                                                            <span
+                                                                style={
+                                                                    styles.infoLabel
+                                                                }
+                                                            >
+                                                                Payment Proof
+                                                            </span>
 
-                                        <div
-                                            style={
-                                                styles.actions
-                                            }
-                                        >
+                                                            <strong>
+                                                                {
+                                                                    program.paymentProof
+                                                                        ? "Uploaded"
+                                                                        : "Not uploaded"
+                                                                }
+                                                            </strong>
 
-                                            {program.status ===
-                                                "Pending" && (
+                                                        </div>
 
-                                                <button
-                                                    style={
-                                                        styles.approveButton
-                                                    }
-                                                    onClick={() =>
-                                                        approveProgram(
-                                                            program._id
-                                                        )
-                                                    }
-                                                >
-                                                    ✅ Approve
-                                                </button>
+                                                        <button
+                                                            style={
+                                                                program.paymentProof
+                                                                    ? styles.secondaryButton
+                                                                    : styles.disabledButton
+                                                            }
+                                                            disabled={
+                                                                !program.paymentProof
+                                                            }
+                                                            onClick={() =>
+                                                                viewPaymentProof(
+                                                                    program.paymentProof
+                                                                )
+                                                            }
+                                                        >
+                                                            📄 View Proof
+                                                        </button>
 
-                                            )}
+                                                    </div>
 
-                                            {program.status ===
-                                                "Active" && (
+                                                    <div
+                                                        style={
+                                                            styles.actions
+                                                        }
+                                                    >
 
-                                                <button
-                                                    style={
-                                                        styles.blockButton
-                                                    }
-                                                    onClick={() =>
-                                                        blockProgram(
-                                                            program._id
-                                                        )
-                                                    }
-                                                >
-                                                    🚫 Block Centre
-                                                </button>
+                                                        {
+                                                            program.status ===
+                                                                "Pending" && (
 
-                                            )}
+                                                                <button
+                                                                    style={
+                                                                        styles.approveButton
+                                                                    }
+                                                                    onClick={() =>
+                                                                        approveProgram(
+                                                                            program._id
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    ✅ Approve
+                                                                </button>
 
-                                            {program.status ===
-                                                "Blocked" && (
+                                                            )
+                                                        }
 
-                                                <button
-                                                    style={
-                                                        styles.unblockButton
-                                                    }
-                                                    onClick={() =>
-                                                        unblockProgram(
-                                                            program._id
-                                                        )
-                                                    }
-                                                >
-                                                    🔓 Unblock Centre
-                                                </button>
+                                                        {
+                                                            program.status ===
+                                                                "Active" && (
 
-                                            )}
+                                                                <button
+                                                                    style={
+                                                                        styles.blockButton
+                                                                    }
+                                                                    onClick={() =>
+                                                                        blockProgram(
+                                                                            program._id
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    🚫 Block Centre
+                                                                </button>
 
-                                        </div>
+                                                            )
+                                                        }
 
-                                    </div>
+                                                        {
+                                                            program.status ===
+                                                                "Blocked" && (
 
-                                );
+                                                                <button
+                                                                    style={
+                                                                        styles.unblockButton
+                                                                    }
+                                                                    onClick={() =>
+                                                                        unblockProgram(
+                                                                            program._id
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    🔓 Unblock Centre
+                                                                </button>
 
-                            })}
+                                                            )
+                                                        }
 
-                        </div>
+                                                        <button
+                                                            style={
+                                                                styles.deleteButton
+                                                            }
+                                                            onClick={() =>
+                                                                deleteProgram(
+                                                                    program._id,
+                                                                    program.name
+                                                                )
+                                                            }
+                                                        >
+                                                            🗑️ Delete Centre
+                                                        </button>
 
-                    )}
+                                                    </div>
+
+                                                </div>
+
+                                            );
+
+                                        }
+                                    )
+                                }
+
+                            </div>
+
+                        )
+                    }
 
                 </div>
 
@@ -2983,10 +3848,6 @@ const styles = {
         marginTop: "2px"
     },
 
-    // =========================================
-    // PAYMENTS
-    // =========================================
-
     paymentsSection: {
         background: "#ffffff",
         borderRadius: "20px",
@@ -3206,10 +4067,6 @@ const styles = {
         background: "#fafbfc"
     },
 
-    // =========================================
-    // TUITION CENTRES
-    // =========================================
-
     section: {
         background: "#ffffff",
         borderRadius: "20px",
@@ -3408,7 +4265,8 @@ const styles = {
     actions: {
         display: "flex",
         gap: "8px",
-        marginTop: "17px"
+        marginTop: "17px",
+        flexWrap: "wrap"
     },
 
     approveButton: {
@@ -3439,6 +4297,18 @@ const styles = {
         border: "none",
         background: "#111827",
         color: "#ffffff",
+        padding: "11px",
+        borderRadius: "9px",
+        cursor: "pointer",
+        fontWeight: "700"
+    },
+
+    deleteButton: {
+        flex: 1,
+        border:
+            "1px solid #f0caca",
+        background: "#fff0f0",
+        color: "#b42323",
         padding: "11px",
         borderRadius: "9px",
         cursor: "pointer",
