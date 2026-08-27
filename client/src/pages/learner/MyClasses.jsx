@@ -97,7 +97,7 @@ function MyClasses() {
 
             const response = await fetch(
 
-                `http://localhost:5000/api/classes/program/${programId}/${encodeURIComponent(grade)}`
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/program/${programId}/${encodeURIComponent(grade)}`
 
             );
 
@@ -283,4 +283,5 @@ function MyClasses() {
 
 
 export default MyClasses;
+
 

@@ -32,7 +32,7 @@ function TutorMarkSubmission() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/submissions/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/submissions/${id}`
             );
 
 
@@ -178,7 +178,7 @@ function TutorMarkSubmission() {
 
             const response =
                 await fetch(
-                    `http://localhost:5000/api/submissions/${id}`,
+                    `https://tutorhub-api-bz1y.onrender.com/api/submissions/${id}`,
                     {
                         method: "PUT",
 
@@ -646,4 +646,5 @@ function TutorMarkSubmission() {
 }
 
 export default TutorMarkSubmission;
+
 

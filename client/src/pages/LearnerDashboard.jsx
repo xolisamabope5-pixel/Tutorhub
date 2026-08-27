@@ -99,7 +99,7 @@ function LearnerDashboard() {
             const response = await fetch(
 
 
-                `http://localhost:5000/api/classes/program/${programId}/${grade}`
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/program/${programId}/${grade}`
 
 
             );
@@ -152,7 +152,7 @@ function LearnerDashboard() {
 
 
 
-                `http://localhost:5000/api/classes/${classId}/join`,
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/${classId}/join`,
 
 
 

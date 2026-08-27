@@ -33,7 +33,7 @@ function Learners(){
 
             const response = await fetch(
 
-                `http://localhost:5000/api/programs/owner/${ownerId}`
+                `https://tutorhub-api-bz1y.onrender.com/api/programs/owner/${ownerId}`
 
             );
 

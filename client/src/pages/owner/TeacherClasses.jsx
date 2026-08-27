@@ -22,7 +22,7 @@ function TeacherClasses(){
         try{
 
             const response = await fetch(
-                `http://localhost:5000/api/classes/tutor/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/tutor/${id}`
             );
 
             const data = await response.json();

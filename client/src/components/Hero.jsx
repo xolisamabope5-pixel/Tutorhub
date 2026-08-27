@@ -24,7 +24,7 @@ function Hero() {
             try {
 
                 const response = await fetch(
-                    "http://localhost:5000/api/platform-settings"
+                    "https://tutorhub-api-bz1y.onrender.com/api/platform-settings"
                 );
 
                 if (!response.ok) {
@@ -154,4 +154,5 @@ function Hero() {
 }
 
 export default Hero;
+
 

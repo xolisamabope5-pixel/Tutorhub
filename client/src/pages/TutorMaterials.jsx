@@ -39,7 +39,7 @@ function TutorMaterials(){
 
             const response = await fetch(
 
-                `http://localhost:5000/api/classes/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/${id}`
 
             );
 
@@ -146,7 +146,7 @@ function TutorMaterials(){
 
             const response = await fetch(
 
-                "http://localhost:5000/api/materials/upload",
+                "https://tutorhub-api-bz1y.onrender.com/api/materials/upload",
 
                 {
 

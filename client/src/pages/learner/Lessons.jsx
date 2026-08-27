@@ -66,7 +66,7 @@ function Lessons() {
                 const classResponse =
                     await fetch(
 
-                        `http://localhost:5000/api/classes/program/${learnerData.programId._id}/${learnerData.grade}`
+                        `https://tutorhub-api-bz1y.onrender.com/api/classes/program/${learnerData.programId._id}/${learnerData.grade}`
 
                     );
 
@@ -114,7 +114,7 @@ function Lessons() {
 
                             fetch(
 
-                                `http://localhost:5000/api/lessons/class/${item._id}`
+                                `https://tutorhub-api-bz1y.onrender.com/api/lessons/class/${item._id}`
 
                             ).then(
                                 (response) =>
@@ -836,4 +836,5 @@ function Lessons() {
 }
 
 export default Lessons;
+
 

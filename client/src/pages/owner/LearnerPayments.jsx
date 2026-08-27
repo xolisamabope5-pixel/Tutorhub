@@ -34,7 +34,7 @@ function LearnerPayments(){
 
             const response = await fetch(
 
-                `http://localhost:5000/api/payments/learner/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/payments/learner/${id}`
 
             );
 
@@ -71,7 +71,7 @@ function LearnerPayments(){
 
             await fetch(
 
-                `http://localhost:5000/api/payments/${paymentId}/approve`,
+                `https://tutorhub-api-bz1y.onrender.com/api/payments/${paymentId}/approve`,
 
                 {
 
@@ -118,7 +118,7 @@ function LearnerPayments(){
 
             await fetch(
 
-                `http://localhost:5000/api/payments/${paymentId}/reject`,
+                `https://tutorhub-api-bz1y.onrender.com/api/payments/${paymentId}/reject`,
 
                 {
 
@@ -258,7 +258,7 @@ function LearnerPayments(){
 
                     <a
 
-                    href={`http://localhost:5000/uploads/${payment.proof}`}
+                    href={`https://tutorhub-api-bz1y.onrender.com/uploads/${payment.proof}`}
 
                     target="_blank"
 

@@ -38,7 +38,7 @@ try{
 
 const response = await fetch(
 
-`http://localhost:5000/api/assignments/${id}`
+`https://tutorhub-api-bz1y.onrender.com/api/assignments/${id}`
 
 );
 
@@ -104,7 +104,7 @@ return;
 
 const response = await fetch(
 
-`http://localhost:5000/api/submissions/learner/${learner._id}/${id}`
+`https://tutorhub-api-bz1y.onrender.com/api/submissions/learner/${learner._id}/${id}`
 
 );
 
@@ -177,7 +177,7 @@ localStorage.getItem("learner")
 
 const response = await fetch(
 
-"http://localhost:5000/api/submissions/upload",
+"https://tutorhub-api-bz1y.onrender.com/api/submissions/upload",
 
 {
 

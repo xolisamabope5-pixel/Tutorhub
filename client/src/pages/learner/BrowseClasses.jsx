@@ -106,7 +106,7 @@ function BrowseClasses() {
 
             const response = await fetch(
 
-                `http://localhost:5000/api/classes/program/${programId}/${encodeURIComponent(grade)}`
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/program/${programId}/${encodeURIComponent(grade)}`
 
             );
 
@@ -168,7 +168,7 @@ function BrowseClasses() {
 
             const response = await fetch(
 
-                `http://localhost:5000/api/classes/${classId}/join`,
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/${classId}/join`,
 
                 {
 
@@ -393,3 +393,4 @@ function BrowseClasses() {
 
 
 export default BrowseClasses;
+

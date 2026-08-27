@@ -71,7 +71,7 @@ function TutorRegister() {
         try {
 
             const response = await fetch(
-                "http://localhost:5000/api/programs"
+                "https://tutorhub-api-bz1y.onrender.com/api/programs"
             );
 
             const data =
@@ -107,7 +107,7 @@ function TutorRegister() {
                 setLoadingPaymentDetails(true);
 
                 const response = await fetch(
-                    "http://localhost:5000/api/platform-settings/owner-payment-details"
+                    "https://tutorhub-api-bz1y.onrender.com/api/platform-settings/owner-payment-details"
                 );
 
 
@@ -359,7 +359,7 @@ function TutorRegister() {
 
 
             const response = await fetch(
-                "http://localhost:5000/api/tutors/register",
+                "https://tutorhub-api-bz1y.onrender.com/api/tutors/register",
                 {
 
                     method: "POST",

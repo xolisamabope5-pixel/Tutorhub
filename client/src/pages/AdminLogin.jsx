@@ -38,7 +38,7 @@ function AdminLogin() {
 
             const response =
                 await fetch(
-                    "http://localhost:5000/api/admin-auth/login",
+                    "https://tutorhub-api-bz1y.onrender.com/api/admin-auth/login",
                     {
 
                         method: "POST",

@@ -69,7 +69,7 @@ function OwnerSettings(){
             const response = await fetch(
 
 
-                `http://localhost:5000/api/programs/owner/${ownerId}/settings`
+                `https://tutorhub-api-bz1y.onrender.com/api/programs/owner/${ownerId}/settings`
 
 
             );
@@ -182,7 +182,7 @@ function OwnerSettings(){
             const response = await fetch(
 
 
-                `http://localhost:5000/api/programs/owner/${savedOwner.id}/settings`,
+                `https://tutorhub-api-bz1y.onrender.com/api/programs/owner/${savedOwner.id}/settings`,
 
 
                 {
@@ -293,7 +293,7 @@ function OwnerSettings(){
             const response = await fetch(
 
 
-                `http://localhost:5000/api/tutors/${savedOwner.id}/change-password`,
+                `https://tutorhub-api-bz1y.onrender.com/api/tutors/${savedOwner.id}/change-password`,
 
 
                 {

@@ -185,7 +185,7 @@ function OwnerTutorHubPayment() {
                 const dashboardResponse =
                     await fetch(
 
-                        `http://localhost:5000/api/programs/owner/${ownerId}`
+                        `https://tutorhub-api-bz1y.onrender.com/api/programs/owner/${ownerId}`
 
                     );
 
@@ -274,7 +274,7 @@ function OwnerTutorHubPayment() {
                 const response =
                     await fetch(
 
-                        "http://localhost:5000/api/platform-settings"
+                        "https://tutorhub-api-bz1y.onrender.com/api/platform-settings"
 
                     );
 
@@ -353,7 +353,7 @@ function OwnerTutorHubPayment() {
                 const response =
                     await fetch(
 
-                        `http://localhost:5000/api/owner-payments/owner/${ownerId}`
+                        `https://tutorhub-api-bz1y.onrender.com/api/owner-payments/owner/${ownerId}`
 
                     );
 
@@ -503,7 +503,7 @@ function OwnerTutorHubPayment() {
                 const response =
                     await fetch(
 
-                        "http://localhost:5000/api/owner-payments/create",
+                        "https://tutorhub-api-bz1y.onrender.com/api/owner-payments/create",
 
                         {
 
@@ -626,7 +626,7 @@ function OwnerTutorHubPayment() {
 
             window.open(
 
-                `http://localhost:5000/uploads/${file}`,
+                `https://tutorhub-api-bz1y.onrender.com/uploads/${file}`,
 
                 "_blank"
 

@@ -5,7 +5,7 @@ function Admin() {
 
     const navigate = useNavigate();
 
-    const API_URL = "http://localhost:5000";
+    const API_URL = "https://tutorhub-api-bz1y.onrender.com";
 
     const [programs, setPrograms] = useState([]);
     const [loading, setLoading] = useState(true);

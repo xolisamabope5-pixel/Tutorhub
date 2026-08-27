@@ -59,7 +59,7 @@ function Register() {
 
       const response = await fetch(
 
-        "http://localhost:5000/api/programs"
+        "https://tutorhub-api-bz1y.onrender.com/api/programs"
 
       );
 
@@ -124,7 +124,7 @@ function Register() {
       const response = await fetch(
 
 
-        `http://localhost:5000/api/programs/${programId}/tutors`
+        `https://tutorhub-api-bz1y.onrender.com/api/programs/${programId}/tutors`
 
 
       );
@@ -138,7 +138,7 @@ function Register() {
       setTutors(data);
       const programResponse = await fetch(
 
-        `http://localhost:5000/api/programs/${programId}`
+        `https://tutorhub-api-bz1y.onrender.com/api/programs/${programId}`
 
       );
 
@@ -310,7 +310,7 @@ function Register() {
 
       const response = await fetch(
 
-        "http://localhost:5000/api/learners/register",
+        "https://tutorhub-api-bz1y.onrender.com/api/learners/register",
 
         {
 

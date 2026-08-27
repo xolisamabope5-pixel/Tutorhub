@@ -21,7 +21,7 @@ function ManageLearner(){
 
             const response = await fetch(
 
-                `http://localhost:5000/api/learners/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}`
 
             );
 
@@ -41,7 +41,7 @@ function ManageLearner(){
 
         await fetch(
 
-            `http://localhost:5000/api/learners/${id}/approve`,
+            `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/approve`,
 
             {
 
@@ -61,7 +61,7 @@ function ManageLearner(){
 
         await fetch(
 
-            `http://localhost:5000/api/learners/${id}/block`,
+            `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/block`,
 
             {
 
@@ -81,7 +81,7 @@ function ManageLearner(){
 
         await fetch(
 
-            `http://localhost:5000/api/learners/${id}/unblock`,
+            `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/unblock`,
 
             {
 
@@ -159,7 +159,7 @@ function ManageLearner(){
 
                     onClick={()=>window.open(
 
-                        `http://localhost:5000/uploads/${learner.paymentProof}`,
+                        `https://tutorhub-api-bz1y.onrender.com/uploads/${learner.paymentProof}`,
 
                         "_blank"
 

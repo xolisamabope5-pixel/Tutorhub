@@ -52,7 +52,7 @@ function Payments(){
 
             const response = await fetch(
 
-                `http://localhost:5000/api/payments/owner/${ownerId}`
+                `https://tutorhub-api-bz1y.onrender.com/api/payments/owner/${ownerId}`
 
             );
 

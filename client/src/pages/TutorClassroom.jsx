@@ -162,7 +162,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/classes/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/${id}`
             );
 
             const data = await response.json();
@@ -200,7 +200,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/assignments/class/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/assignments/class/${id}`
             );
 
             const data = await response.json();
@@ -235,7 +235,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/lessons/class/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/lessons/class/${id}`
             );
 
             const data = await response.json();
@@ -382,7 +382,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                "http://localhost:5000/api/lessons/create",
+                "https://tutorhub-api-bz1y.onrender.com/api/lessons/create",
                 {
                     method: "POST",
 
@@ -486,7 +486,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/lessons/${lessonId}`,
+                `https://tutorhub-api-bz1y.onrender.com/api/lessons/${lessonId}`,
                 {
                     method: "DELETE"
                 }
@@ -547,7 +547,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/lessons/${item._id}/recording`,
+                `https://tutorhub-api-bz1y.onrender.com/api/lessons/${item._id}/recording`,
                 {
                     method: "PUT",
 
@@ -657,7 +657,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/classes/${id}/announcement`,
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/${id}/announcement`,
                 {
                     method: "PUT",
 
@@ -742,7 +742,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/classes/${id}/announcement/${announcementId}`,
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/${id}/announcement/${announcementId}`,
                 {
                     method: "DELETE"
                 }
@@ -852,7 +852,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                "http://localhost:5000/api/assignments/create",
+                "https://tutorhub-api-bz1y.onrender.com/api/assignments/create",
                 {
                     method: "POST",
 
@@ -974,7 +974,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/assignments/${assignmentId}`,
+                `https://tutorhub-api-bz1y.onrender.com/api/assignments/${assignmentId}`,
                 {
                     method: "DELETE"
                 }
@@ -1075,7 +1075,7 @@ function TutorClassroom() {
 
             const response =
                 await fetch(
-                    "http://localhost:5000/api/materials/upload",
+                    "https://tutorhub-api-bz1y.onrender.com/api/materials/upload",
                     {
                         method: "POST",
                         body: formData
@@ -1148,7 +1148,7 @@ function TutorClassroom() {
 
             const response =
                 await fetch(
-                    `http://localhost:5000/api/materials/${materialId}`,
+                    `https://tutorhub-api-bz1y.onrender.com/api/materials/${materialId}`,
                     {
                         method: "DELETE"
                     }
@@ -1721,7 +1721,7 @@ function TutorClassroom() {
                                             <button
                                                 onClick={() =>
                                                     window.open(
-                                                        `http://localhost:5000/${item.file}`,
+                                                        `https://tutorhub-api-bz1y.onrender.com/${item.file}`,
                                                         "_blank"
                                                     )
                                                 }
@@ -3100,4 +3100,5 @@ const styles = {
 };
 
 export default TutorClassroom;
+
 

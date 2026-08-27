@@ -64,7 +64,7 @@ function Assignments() {
 
 
             const classResponse = await fetch(
-                `http://localhost:5000/api/classes/program/${learnerData.programId._id}/${learnerData.grade}`
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/program/${learnerData.programId._id}/${learnerData.grade}`
             );
 
 
@@ -93,7 +93,7 @@ function Assignments() {
 
                 const assignmentResponse =
                     await fetch(
-                        `http://localhost:5000/api/assignments/class/${classroom._id}`
+                        `https://tutorhub-api-bz1y.onrender.com/api/assignments/class/${classroom._id}`
                     );
 
 
@@ -235,7 +235,7 @@ function Assignments() {
 
             const response =
                 await fetch(
-                    `http://localhost:5000/api/assignments/${assignmentId}`
+                    `https://tutorhub-api-bz1y.onrender.com/api/assignments/${assignmentId}`
                 );
 
 
@@ -298,7 +298,7 @@ function Assignments() {
 
                     const submissionResponse =
                         await fetch(
-                            `http://localhost:5000/api/submissions/learner/${learnerId}/${assignmentId}`
+                            `https://tutorhub-api-bz1y.onrender.com/api/submissions/learner/${learnerId}/${assignmentId}`
                         );
 
 
@@ -623,7 +623,7 @@ function Assignments() {
 
             const response =
                 await fetch(
-                    "http://localhost:5000/api/submissions/create",
+                    "https://tutorhub-api-bz1y.onrender.com/api/submissions/create",
                     {
 
                         method: "POST",
@@ -1499,4 +1499,5 @@ function Assignments() {
 }
 
 export default Assignments;
+
 

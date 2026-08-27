@@ -30,7 +30,7 @@ try{
 
 const response = await fetch(
 
-`http://localhost:5000/api/submissions/assignment/${id}`
+`https://tutorhub-api-bz1y.onrender.com/api/submissions/assignment/${id}`
 
 );
 

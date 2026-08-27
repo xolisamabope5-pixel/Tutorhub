@@ -139,7 +139,7 @@ function CreateClass(){
             const response = await fetch(
 
 
-                "http://localhost:5000/api/classes/create",
+                "https://tutorhub-api-bz1y.onrender.com/api/classes/create",
 
 
                 {

@@ -23,7 +23,7 @@ function ManageTeacher(){
         try{
 
             const response = await fetch(
-                `http://localhost:5000/api/tutors/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/tutors/${id}`
             );
 
             const data = await response.json();
@@ -46,7 +46,7 @@ function ManageTeacher(){
 
             await fetch(
 
-                `http://localhost:5000/api/tutors/${id}/reject`,
+                `https://tutorhub-api-bz1y.onrender.com/api/tutors/${id}/reject`,
 
                 {
                     method:"PUT"
@@ -76,7 +76,7 @@ function ManageTeacher(){
 
             await fetch(
 
-                `http://localhost:5000/api/tutors/${id}/approve`,
+                `https://tutorhub-api-bz1y.onrender.com/api/tutors/${id}/approve`,
 
                 {
                     method:"PUT"

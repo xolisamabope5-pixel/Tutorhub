@@ -123,7 +123,7 @@ function OwnerDashboard() {
 
                 const response =
                     await fetch(
-                        `http://localhost:5000/api/programs/owner/${ownerId}`
+                        `https://tutorhub-api-bz1y.onrender.com/api/programs/owner/${ownerId}`
                     );
 
 
@@ -169,7 +169,7 @@ function OwnerDashboard() {
 
                 const response =
                     await fetch(
-                        `http://localhost:5000/api/platform-settings/owner/${ownerId}`
+                        `https://tutorhub-api-bz1y.onrender.com/api/platform-settings/owner/${ownerId}`
                     );
 
 
@@ -222,7 +222,7 @@ function OwnerDashboard() {
 
             window.open(
 
-                `http://localhost:5000/uploads/${file}`,
+                `https://tutorhub-api-bz1y.onrender.com/uploads/${file}`,
 
                 "_blank"
 
@@ -268,7 +268,7 @@ function OwnerDashboard() {
 
                 const response =
                     await fetch(
-                        `http://localhost:5000/api/platform-settings/owner/${owner.id}/payment-proof`,
+                        `https://tutorhub-api-bz1y.onrender.com/api/platform-settings/owner/${owner.id}/payment-proof`,
                         {
 
                             method:
@@ -363,7 +363,7 @@ function OwnerDashboard() {
                 const response =
                     await fetch(
 
-                        `http://localhost:5000/api/learners/${id}/approve`,
+                        `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/approve`,
 
                         {
                             method:
@@ -419,7 +419,7 @@ function OwnerDashboard() {
 
                 await fetch(
 
-                    `http://localhost:5000/api/learners/${id}/block`,
+                    `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/block`,
 
                     {
                         method:
@@ -461,7 +461,7 @@ function OwnerDashboard() {
 
                 await fetch(
 
-                    `http://localhost:5000/api/learners/${id}/unblock`,
+                    `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/unblock`,
 
                     {
                         method:

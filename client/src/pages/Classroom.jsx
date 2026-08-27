@@ -101,7 +101,7 @@ function Classroom() {
             setLoading(true);
 
             const classResponse = await fetch(
-                `http://localhost:5000/api/classes/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/${id}`
             );
 
             const classData = await classResponse.json();
@@ -147,7 +147,7 @@ function Classroom() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/assignments/class/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/assignments/class/${id}`
             );
 
             const data = await response.json();
@@ -187,7 +187,7 @@ function Classroom() {
         try {
 
             const response = await fetch(
-                `http://localhost:5000/api/lessons/class/${id}`
+                `https://tutorhub-api-bz1y.onrender.com/api/lessons/class/${id}`
             );
 
             const data = await response.json();
@@ -425,7 +425,7 @@ function Classroom() {
             // ==============================
 
             const response = await fetch(
-                `http://localhost:5000/api/assignments/${assignmentId}`
+                `https://tutorhub-api-bz1y.onrender.com/api/assignments/${assignmentId}`
             );
 
             const data = await response.json();
@@ -480,7 +480,7 @@ function Classroom() {
 
                     const submissionResponse =
                         await fetch(
-                            `http://localhost:5000/api/submissions/learner/${learnerId}/${assignmentId}`
+                            `https://tutorhub-api-bz1y.onrender.com/api/submissions/learner/${learnerId}/${assignmentId}`
                         );
 
                     if (submissionResponse.ok) {
@@ -806,7 +806,7 @@ const submitAssignment = async () => {
 
         const response =
             await fetch(
-                "http://localhost:5000/api/submissions/create",
+                "https://tutorhub-api-bz1y.onrender.com/api/submissions/create",
                 {
 
                     method: "POST",
@@ -1418,7 +1418,7 @@ const submitAssignment = async () => {
 
                                         <a
                                             href={
-                                                `http://localhost:5000/${material.file}`
+                                                `https://tutorhub-api-bz1y.onrender.com/${material.file}`
                                             }
                                             target="_blank"
                                             rel="noreferrer"
@@ -2267,4 +2267,5 @@ const submitAssignment = async () => {
 }
 
 export default Classroom;
+
 

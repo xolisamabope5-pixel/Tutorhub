@@ -60,7 +60,7 @@ function TutorDashboard() {
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/classes/tutor/${tutorId}`
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/tutor/${tutorId}`
             );
 
             const data = await response.json();
@@ -149,7 +149,7 @@ function TutorDashboard() {
 
             const response = await fetch(
 
-                `http://localhost:5000/api/classes/${classId}`,
+                `https://tutorhub-api-bz1y.onrender.com/api/classes/${classId}`,
 
                 {
 
@@ -555,4 +555,5 @@ function TutorDashboard() {
 }
 
 export default TutorDashboard;
+
 
