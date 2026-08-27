@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const Learner = require("../models/Learner");
+const Learner = require("../models/learner");
 const Program = require("../models/Program");
 const Tutor = require("../models/Tutor");
 const Payment = require("../models/Payment");

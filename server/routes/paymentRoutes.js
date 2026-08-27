@@ -6,7 +6,7 @@ const router = express.Router();
 const Payment = require("../models/Payment");
 const multer = require("multer");
 const path = require("path");
-const Learner = require("../models/Learner");
+const Learner = require("../models/learner");
 
 const Program = require("../models/Program");
 

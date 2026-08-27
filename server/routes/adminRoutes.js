@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const Admin = require("../models/Admin");
 const PlatformSettings = require("../models/PlatformSettings");
 const Tutor = require("../models/Tutor");
-const Learner = require("../models/Learner");
+const Learner = require("../models/learner");
 const Program = require("../models/Program");
 
 const {

@@ -3,7 +3,7 @@ const router = express.Router();
 
 const Program = require("../models/Program");
 const Tutor = require("../models/Tutor");
-const Learner = require("../models/Learner");
+const Learner = require("../models/learner");
 const Payment = require("../models/Payment");
 
 
