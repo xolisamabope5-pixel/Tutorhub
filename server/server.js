@@ -47,7 +47,7 @@ const platformSettingsRoutes =
     require("./routes/platformSettingsRoutes");
 
 const ownerPaymentRoutes =
-    require("./routes/ownerPaymentRoutes");
+    require("./routes/OwnerPaymentRoutes");
 
 const adminAuthRoutes =
     require("./routes/adminAuthRoutes");
