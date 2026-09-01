@@ -1,0 +1,208 @@
+/* =========================================
+   TUTORHUB ADMIN — MOBILE RESPONSIVENESS
+   ========================================= */
+
+/* Tablets */
+@media (max-width: 900px) {
+
+    .admin-page .admin-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .admin-page .admin-header-actions {
+        justify-content: flex-start !important;
+        width: 100% !important;
+    }
+
+    .admin-page .admin-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .admin-page .admin-payment-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .admin-page .admin-payment-details-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .admin-page .admin-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+}
+
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 600px) {
+
+    .admin-page {
+        width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    .admin-page .admin-container {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 12px !important;
+    }
+
+    /* Header */
+
+    .admin-page .admin-header {
+        padding: 20px !important;
+        border-radius: 15px !important;
+        gap: 18px !important;
+    }
+
+    .admin-page .admin-header-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+    }
+
+    .admin-page .admin-header-actions button {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Typography */
+
+    .admin-page .admin-title {
+        font-size: 24px !important;
+        line-height: 1.2 !important;
+    }
+
+    .admin-page .admin-subtitle {
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+    }
+
+    /* Cards */
+
+    .admin-page .settings-card,
+    .admin-page .payments-section,
+    .admin-page .section {
+        padding: 18px !important;
+        border-radius: 15px !important;
+    }
+
+    /* Forms */
+
+    .admin-page .form-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-page .login-change-card {
+        grid-template-columns: 1fr !important;
+        padding: 16px !important;
+    }
+
+    /* Statistics */
+
+    .admin-page .admin-stats-grid,
+    .admin-page .admin-payment-stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-page .admin-payment-details-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Main centre cards */
+
+    .admin-page .admin-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Card internal stats */
+
+    .admin-page .stats-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-page .subscription-box {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Section headers */
+
+    .admin-page .section-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .admin-page .settings-header {
+        flex-direction: column !important;
+    }
+
+    /* Payment header */
+
+    .admin-page .payment-card-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .admin-page .payment-proof-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .admin-page .payment-actions {
+        justify-content: flex-start !important;
+        width: 100% !important;
+    }
+
+    /* Bank information */
+
+    .admin-page .bank-card {
+        padding: 18px !important;
+    }
+
+    .admin-page .bank-status {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .admin-page .admin-proof-section {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    /* Buttons */
+
+    .admin-page .actions {
+        flex-direction: column !important;
+    }
+
+    .admin-page .actions button {
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    /* Colour input */
+
+    .admin-page .color-input-row {
+        width: 100% !important;
+    }
+
+    .admin-page .color-text-input {
+        min-width: 0 !important;
+    }
+
+    /* Prevent long emails / text from breaking the page */
+
+    .admin-page p,
+    .admin-page h1,
+    .admin-page h2,
+    .admin-page h3,
+    .admin-page span {
+        overflow-wrap: anywhere !important;
+    }
+
+}
