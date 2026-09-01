@@ -1,93 +1,91 @@
+
 const express = require("express");
 
 const router = express.Router();
-const fs = require("fs");
-const path = require("path");
+
 const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const { v2: cloudinary } = require("cloudinary");
 
 const Material = require("../models/Material");
 const Class = require("../models/Class");
 
 
-// ==============================
-// MULTER STORAGE CONFIGURATION
-// ==============================
+// =====================================================
+// CLOUDINARY CONFIGURATION
+// =====================================================
 
-const storage = multer.diskStorage({
+cloudinary.config({
 
-    destination: (req, file, cb) => {
+    cloud_name:
+        process.env.CLOUDINARY_CLOUD_NAME,
 
-        cb(null, "uploads/materials");
+    api_key:
+        process.env.CLOUDINARY_API_KEY,
 
-    },
-
-    filename: (req, file, cb) => {
-
-        cb(
-
-            null,
-
-            Date.now() + "-" + file.originalname
-
-        );
-
-    }
+    api_secret:
+        process.env.CLOUDINARY_API_SECRET
 
 });
 
 
+// =====================================================
+// CLOUDINARY STORAGE
+// =====================================================
 
-const upload = multer({
+const storage =
+    new CloudinaryStorage({
 
-    storage: storage,
+        cloudinary,
 
-    fileFilter: (req, file, cb) => {
+        params: {
 
-        const allowedTypes = [
+            folder:
+                "tutorhub/materials",
 
-            "application/pdf",
+            resource_type:
+                "auto",
 
-            "application/msword",
+            allowed_formats: [
 
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "pdf",
 
-            "application/vnd.ms-powerpoint",
+                "doc",
 
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "docx",
 
-            "image/jpeg",
+                "ppt",
 
-            "image/png"
+                "pptx",
 
-        ];
+                "jpg",
 
+                "jpeg",
 
+                "png"
 
-        if (allowedTypes.includes(file.mimetype)) {
-
-            cb(null, true);
-
-        } else {
-
-            cb(
-
-                new Error("File type not allowed"),
-
-                false
-
-            );
+            ]
 
         }
 
-    }
-
-});
+    });
 
 
+// =====================================================
+// MULTER
+// =====================================================
 
-// =====================================
+const upload =
+    multer({
+
+        storage
+
+    });
+
+
+// =====================================================
 // UPLOAD MATERIAL
-// =====================================
+// =====================================================
 
 router.post(
 
@@ -112,76 +110,130 @@ router.post(
             } = req.body;
 
 
+            // =================================================
+            // CHECK FILE
+            // =================================================
 
             if (!req.file) {
 
                 return res.status(400).json({
 
-                    message: "No file uploaded"
+                    message:
+                        "No file uploaded"
 
                 });
 
             }
 
 
+            // =================================================
+            // CHECK CLASSROOM
+            // =================================================
 
-            // Create new material
+            const classroom =
+                await Class.findById(classId);
 
-            const material = new Material({
 
-                title,
+            if (!classroom) {
 
-                description,
+                // Delete uploaded Cloudinary file
+                // if classroom does not exist
 
-                file: `uploads/materials/${req.file.filename}`,
+                if (req.file.filename) {
 
-                classId,
+                    try {
 
-                uploadedBy
+                        await cloudinary.uploader.destroy(
 
-            });
+                            req.file.filename,
 
+                            {
+                                resource_type:
+                                    req.file.resource_type ||
+                                    "image"
+                            }
+
+                        );
+
+                    } catch (deleteError) {
+
+                        console.log(
+                            "Cloudinary cleanup error:",
+                            deleteError
+                        );
+
+                    }
+
+                }
+
+
+                return res.status(404).json({
+
+                    message:
+                        "Classroom not found"
+
+                });
+
+            }
+
+
+            // =================================================
+            // CREATE MATERIAL
+            // =================================================
+
+            const material =
+                new Material({
+
+                    title,
+
+                    description,
+
+                    // Cloudinary URL
+                    file:
+                        req.file.path,
+
+                    classId,
+
+                    uploadedBy
+
+                });
 
 
             await material.save();
 
 
-
-            // Add material to classroom
-
-            const classroom = await Class.findById(classId);
-
-            if (!classroom) {
-
-                return res.status(404).json({
-
-                    message: "Classroom not found"
-
-                });
-
-            }
-
-
+            // =================================================
+            // ADD MATERIAL TO CLASSROOM
+            // =================================================
 
             classroom.materials.push({
 
-            title: material.title,
+                title:
+                    material.title,
 
-            description: material.description,
+                description:
+                    material.description,
 
-            file: material.file,
+                file:
+                    material.file,
 
-            createdAt: material.createdAt
+                createdAt:
+                    material.createdAt
 
-});
+            });
+
 
             await classroom.save();
 
 
+            // =================================================
+            // SUCCESS
+            // =================================================
 
             res.status(201).json({
 
-                message: "Material uploaded successfully 🚀",
+                message:
+                    "Material uploaded successfully 🚀",
 
                 material
 
@@ -189,13 +241,51 @@ router.post(
 
         } catch (error) {
 
-            console.log(error);
+            console.log(
+                "Material upload error:",
+                error
+            );
 
+
+            // =================================================
+            // CLEANUP CLOUDINARY FILE IF DATABASE SAVE FAILS
+            // =================================================
+
+            if (req.file?.filename) {
+
+                try {
+
+                    await cloudinary.uploader.destroy(
+
+                        req.file.filename,
+
+                        {
+                            resource_type:
+                                req.file.resource_type ||
+                                "image"
+                        }
+
+                    );
+
+                } catch (cleanupError) {
+
+                    console.log(
+                        "Cloudinary cleanup error:",
+                        cleanupError
+                    );
+
+                }
+
+            }
 
 
             res.status(500).json({
 
-                message: "Could not upload material"
+                message:
+                    "Could not upload material",
+
+                error:
+                    error.message
 
             });
 
@@ -206,105 +296,213 @@ router.post(
 );
 
 
-// =====================================
+// =====================================================
 // DELETE MATERIAL
-// =====================================
+// =====================================================
 
-router.delete("/:id", async (req, res) => {
+router.delete(
 
-    try {
+    "/:id",
 
-        const material = await Material.findById(
-            req.params.id
-        );
+    async (req, res) => {
+
+        try {
+
+            // =================================================
+            // FIND MATERIAL
+            // =================================================
+
+            const material =
+                await Material.findById(
+                    req.params.id
+                );
 
 
-        if (!material) {
+            if (!material) {
 
-            return res.status(404).json({
+                return res.status(404).json({
 
-                message: "Material not found"
+                    message:
+                        "Material not found"
+
+                });
+
+            }
+
+
+            // =================================================
+            // DELETE FROM CLOUDINARY
+            // =================================================
+
+            if (material.file) {
+
+                try {
+
+                    const cloudinaryUrl =
+                        material.file;
+
+
+                    // Extract public ID from Cloudinary URL
+                    //
+                    // Example:
+                    // https://res.cloudinary.com/demo/
+                    // raw/upload/v123/tutorhub/materials/file.pdf
+                    //
+                    // We remove the extension because
+                    // Cloudinary destroy expects the public ID.
+
+                    const uploadMarker =
+                        "/upload/";
+
+
+                    const uploadIndex =
+                        cloudinaryUrl.indexOf(
+                            uploadMarker
+                        );
+
+
+                    if (uploadIndex !== -1) {
+
+                        let publicId =
+                            cloudinaryUrl.substring(
+
+                                uploadIndex +
+                                uploadMarker.length
+
+                            );
+
+
+                        // Remove version
+                        if (
+                            publicId.startsWith("v") &&
+                            publicId.includes("/")
+                        ) {
+
+                            publicId =
+                                publicId.substring(
+                                    publicId.indexOf("/") + 1
+                                );
+
+                        }
+
+
+                        // Remove file extension
+                        publicId =
+                            publicId.replace(
+                                /\.[^/.]+$/,
+                                ""
+                            );
+
+
+                        await cloudinary.uploader.destroy(
+
+                            publicId,
+
+                            {
+
+                                resource_type:
+                                    material.file.includes(
+                                        "/raw/upload/"
+                                    )
+                                        ? "raw"
+                                        : "image"
+
+                            }
+
+                        );
+
+                    }
+
+                } catch (cloudinaryError) {
+
+                    console.log(
+
+                        "Cloudinary delete error:",
+
+                        cloudinaryError
+
+                    );
+
+                }
+
+            }
+
+
+            // =================================================
+            // DELETE FROM MATERIAL COLLECTION
+            // =================================================
+
+            await Material.findByIdAndDelete(
+
+                req.params.id
+
+            );
+
+
+            // =================================================
+            // REMOVE FROM CLASSROOM
+            // =================================================
+
+            await Class.findByIdAndUpdate(
+
+                material.classId,
+
+                {
+
+                    $pull: {
+
+                        materials: {
+
+                            file:
+                                material.file
+
+                        }
+
+                    }
+
+                }
+
+            );
+
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            res.json({
+
+                message:
+                    "Material deleted successfully 🗑️"
+
+            });
+
+        } catch (error) {
+
+            console.log(
+
+                "Delete material error:",
+
+                error
+
+            );
+
+
+            res.status(500).json({
+
+                message:
+                    "Could not delete material",
+
+                error:
+                    error.message
 
             });
 
         }
 
-
-        // =====================================
-        // DELETE PHYSICAL FILE
-        // =====================================
-
-        if (material.file) {
-
-            const filePath = path.join(
-                __dirname,
-                "..",
-                material.file
-            );
-
-
-            if (fs.existsSync(filePath)) {
-
-                fs.unlinkSync(filePath);
-
-            }
-
-        }
-
-
-        // =====================================
-        // REMOVE FROM MATERIAL COLLECTION
-        // =====================================
-
-        await Material.findByIdAndDelete(
-            req.params.id
-        );
-
-
-        // =====================================
-        // REMOVE FROM CLASSROOM
-        // =====================================
-
-        await Class.findByIdAndUpdate(
-
-            material.classId,
-
-            {
-                $pull: {
-                    materials: {
-                        file: material.file
-                    }
-                }
-            }
-
-        );
-
-
-        res.json({
-
-            message: "Material deleted successfully 🗑️"
-
-        });
-
-
-    } catch (error) {
-
-        console.log(
-            "Delete material error:",
-            error
-        );
-
-
-        res.status(500).json({
-
-            message: "Could not delete material",
-
-            error: error.message
-
-        });
-
     }
 
-});
+);
+
 
 module.exports = router;
+

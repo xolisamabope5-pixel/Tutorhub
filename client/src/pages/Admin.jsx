@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import "../styles/admin-responsive.css";
 function Admin() {
 
     const navigate = useNavigate();
@@ -1279,15 +1279,15 @@ function Admin() {
 
     return (
 
-        <div style={styles.page}>
+        <div className="admin-page" style={styles.page}>
 
-            <div style={styles.container}>
+            <div className="admin-container" style={styles.container}>
 
                 {/* =====================================
                     HEADER
                 ===================================== */}
 
-                <div style={styles.header}>
+                <div className="admin-header" style={styles.header}>
 
                     <div>
 
@@ -1295,18 +1295,18 @@ function Admin() {
                             TUTORHUB ADMIN
                         </p>
 
-                        <h1 style={styles.title}>
+                            <h1 className="admin-title" style={styles.title}>
                             Tuition Centre Management
                         </h1>
 
-                        <p style={styles.subtitle}>
+                        <p className="admin-subtitle" style={styles.subtitle}>
                             Manage tuition centres,
                             subscriptions and platform access.
                         </p>
 
                     </div>
 
-                    <div style={styles.headerActions}>
+                    <div className="admin-header-actions" style={styles.headerActions}>
 
                         <button
                             style={
@@ -2246,11 +2246,7 @@ function Admin() {
                     OVERVIEW
                 ===================================== */}
 
-                <div
-                    style={
-                        styles.statsGrid
-                    }
-                >
+                <div className="admin-stats-grid" style={styles.statsGrid}>
 
                     <div
                         style={
@@ -2484,10 +2480,8 @@ function Admin() {
                     </div>
 
                     <div
-                        style={
-                            styles.paymentStatsGrid
-                        }
-                    >
+                        className="admin-payment-stats-grid" style={styles.paymentStatsGrid}>
+                    
 
                         <div
                             style={
@@ -2805,10 +2799,8 @@ function Admin() {
                                                     </div>
 
                                                     <div
-                                                        style={
-                                                            styles.paymentDetailsGrid
-                                                        }
-                                                    >
+                                                       className="admin-payment-details-grid" style={styles.paymentDetailsGrid}>
+                                                    
 
                                                         <div
                                                             style={
