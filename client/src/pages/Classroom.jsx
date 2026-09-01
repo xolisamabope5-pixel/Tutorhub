@@ -1417,9 +1417,7 @@ const submitAssignment = async () => {
                                     {material.file && (
 
                                         <a
-                                            href={
-                                                `https://tutorhub-api-bz1y.onrender.com/${material.file.replace(/^\/+/, "")}`
-                                            }
+                                            href={material.file}
                                             target="_blank"
                                             rel="noreferrer"
                                         >
@@ -2267,6 +2265,7 @@ const submitAssignment = async () => {
 }
 
 export default Classroom;
+
 
 
 
