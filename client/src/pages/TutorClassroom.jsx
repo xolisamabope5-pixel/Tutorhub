@@ -1721,7 +1721,7 @@ function TutorClassroom() {
                                             <button
                                                 onClick={() =>
                                                     window.open(
-                                                        `https://tutorhub-api-bz1y.onrender.com/${item.file}`,
+                                                        item.file,
                                                         "_blank"
                                                     )
                                                 }
@@ -3100,5 +3100,6 @@ const styles = {
 };
 
 export default TutorClassroom;
+
 
 
