@@ -258,7 +258,7 @@ function LearnerPayments(){
 
                     <a
 
-                    href={`https://tutorhub-api-bz1y.onrender.com/uploads/${payment.proof}`}
+                    href={`${payment.proof}`}
 
                     target="_blank"
 

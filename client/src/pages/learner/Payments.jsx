@@ -1377,7 +1377,7 @@ function Payments() {
                                                 <a
 
                                                     href={
-                                                        `https://tutorhub-api-bz1y.onrender.com/uploads/${payment.proof}`
+                                                        `${payment.proof}`
                                                     }
 
                                                     target="_blank"

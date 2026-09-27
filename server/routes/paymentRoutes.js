@@ -5,44 +5,52 @@ const router = express.Router();
 
 const Payment = require("../models/Payment");
 const multer = require("multer");
-const path = require("path");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const { v2: cloudinary } = require("cloudinary");
 const Learner = require("../models/learner");
 
 const Program = require("../models/Program");
 
 
-// Upload payment proof storage
+// =====================================================
+// CLOUDINARY CONFIGURATION
+// =====================================================
 
-const storage = multer.diskStorage({
-
-    destination:function(req,file,cb){
-
-        cb(null, path.join(__dirname, "..", "uploads"));
-
-    },
-
-
-    filename:function(req,file,cb){
-
-        cb(
-
-            null,
-
-            Date.now()+path.extname(file.originalname)
-
-        );
-
-    }
-
-
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+
+// =====================================================
+// CLOUDINARY PAYMENT PROOF STORAGE
+// =====================================================
+
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: "tutorhub/payment-proofs",
+        resource_type: "auto",
+        allowed_formats: [
+            "jpg",
+            "jpeg",
+            "png",
+            "pdf"
+        ]
+    }
+});
+
+
+// =====================================================
+// MULTER
+// =====================================================
 
 const upload = multer({
-
     storage
-
 });
+
+
 
 // ==========================================
 // GET ALL PAYMENTS
@@ -522,7 +530,7 @@ async(req,res)=>{
 
             amount,
 
-            proof:req.file ? req.file.filename : "",
+            proof:req.file ? req.file.path : "",
 
             status:"Pending"
 
