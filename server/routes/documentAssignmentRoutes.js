@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const router = express.Router();
 
 const multer = require("multer");
@@ -55,7 +55,18 @@ const upload = multer({
 
 router.post(
     "/create",
-    upload.single("document"),
+    (req, res, next) => {
+        upload.single("document")(req, res, (error) => {
+            if (error) {
+                console.log("DOCUMENT UPLOAD ERROR:", error);
+                return res.status(500).json({
+                    message: "Cloudinary document upload failed.",
+                    error: error.message
+                });
+            }
+            next();
+        });
+    },
     async (req, res) => {
 
         try {
@@ -340,3 +351,4 @@ router.delete(
 
 
 module.exports = router;
+
