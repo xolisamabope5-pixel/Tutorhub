@@ -1,4 +1,4 @@
-
+﻿
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import BackButton from "../components/BackButton";
@@ -48,7 +48,8 @@ function TutorClassroom() {
     const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
     const [showMaterialForm, setShowMaterialForm] = useState(false);
     const [showAssignmentForm, setShowAssignmentForm] = useState(false);
-
+    const [showDocumentAssignmentForm, setShowDocumentAssignmentForm] =
+    useState(false);
     // ==============================
     // CURRENT TIME
     // ==============================
@@ -102,7 +103,19 @@ function TutorClassroom() {
             }
         ]
     });
+    const [documentAssignment, setDocumentAssignment] = useState({
+    title: "",
+    description: "",
+    totalMarks: "",
+    dueDate: "",
+    document: null
+});
+    // ==============================
+// DOCUMENT ASSIGNMENTS
+// ==============================
 
+    const [documentAssignments, setDocumentAssignments] =
+    useState([]);
     // ==============================
     // LOAD DATA
     // ==============================
@@ -111,6 +124,7 @@ function TutorClassroom() {
 
         fetchClassroom();
         fetchAssignments();
+        fetchDocumentAssignments();
         fetchLessons();
 
     }, [id]);
@@ -227,6 +241,41 @@ function TutorClassroom() {
     };
 
     // ==============================
+    // ==============================
+    // FETCH DOCUMENT ASSIGNMENTS
+    // ==============================
+
+    const fetchDocumentAssignments = async () => {
+
+        try {
+
+            const response = await fetch(
+                `https://tutorhub-api-bz1y.onrender.com/api/document-assignments/class/${id}`
+            );
+
+            const data = await response.json();
+
+            if (response.ok) {
+
+                setDocumentAssignments(
+                    Array.isArray(data)
+                        ? data
+                        : []
+                );
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Error loading document assignments:",
+                error
+            );
+
+        }
+
+    };
+
     // FETCH LESSONS
     // ==============================
 
@@ -952,6 +1001,70 @@ function TutorClassroom() {
     };
 
     // ==============================
+    const createDocumentAssignment = async (e) => {
+        e.preventDefault();
+
+        if (!classroom?.tutorId?._id) {
+            alert("Tutor information is not available.");
+            return;
+        }
+
+        if (!documentAssignment.document) {
+            alert("Please select a PDF or Word document.");
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+
+            formData.append("classId", id);
+            formData.append("tutorId", classroom.tutorId._id);
+            formData.append("title", documentAssignment.title);
+            formData.append("description", documentAssignment.description);
+            formData.append("totalMarks", documentAssignment.totalMarks);
+            formData.append("dueDate", documentAssignment.dueDate);
+            formData.append("document", documentAssignment.document);
+
+            const response = await fetch(
+                "https://tutorhub-api-bz1y.onrender.com/api/document-assignments/create",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert("Document Assignment created 🚀");
+
+                setDocumentAssignment({
+                    title: "",
+                    description: "",
+                    totalMarks: "",
+                    dueDate: "",
+                    document: null
+                });
+
+                setShowDocumentAssignmentForm(false);
+                fetchDocumentAssignments();
+            } else {
+                alert(
+                    data.message ||
+                    "Failed to create document assignment"
+                );
+            }
+        } catch (error) {
+            console.log(
+                "Create document assignment error:",
+                error
+            );
+
+            alert(
+                "Could not create document assignment"
+            );
+        }
+    };
     // DELETE ASSIGNMENT
     // ==============================
 
@@ -1791,6 +1904,18 @@ function TutorClassroom() {
                                     : "+ Create Assignment"
                                 }
                             </button>
+                            <button
+                                onClick={() =>
+                                    setShowDocumentAssignmentForm(
+                                        !showDocumentAssignmentForm
+                                    )
+                                }
+                            >
+                                {showDocumentAssignmentForm
+                                    ? "Cancel"
+                                    : "+ Document Assignment"
+                                }
+                            </button>
 
                         </div>
 
@@ -2029,7 +2154,104 @@ function TutorClassroom() {
                                 </form>
 
                             </div>
+                        )}
 
+                        {/* DOCUMENT ASSIGNMENT FORM */}
+                        {showDocumentAssignmentForm && (
+                            <div style={styles.formCard}>
+
+                                <h3>
+                                    Document Assignment
+                                </h3>
+
+                                <form onSubmit={createDocumentAssignment}>
+
+                                    <input
+                                        type="text"
+                                        placeholder="Assignment Title"
+                                        value={documentAssignment.title}
+                                        onChange={(e) =>
+                                            setDocumentAssignment({
+                                                ...documentAssignment,
+                                                title: e.target.value
+                                            })
+                                        }
+                                        required
+                                    />
+
+                                    <textarea
+                                        placeholder="Instructions / Description"
+                                        value={documentAssignment.description}
+                                        onChange={(e) =>
+                                            setDocumentAssignment({
+                                                ...documentAssignment,
+                                                description: e.target.value
+                                            })
+                                        }
+                                    />
+
+                                    <label>
+                                        Upload PDF or Word Document
+                                    </label>
+
+                                    <input
+                                        type="file"
+                                        accept=".pdf,.doc,.docx"
+                                        onChange={(e) =>
+                                            setDocumentAssignment({
+                                                ...documentAssignment,
+                                                document: e.target.files[0]
+                                            })
+                                        }
+                                        required
+                                    />
+
+                                    <input
+                                        type="number"
+                                        placeholder="Total Marks"
+                                        value={documentAssignment.totalMarks}
+                                        onChange={(e) =>
+                                            setDocumentAssignment({
+                                                ...documentAssignment,
+                                                totalMarks: e.target.value
+                                            })
+                                        }
+                                        min="1"
+                                        required
+                                    />
+
+                                    <label>
+                                        Due Date
+                                    </label>
+
+                                    <input
+                                        type="datetime-local"
+                                        value={documentAssignment.dueDate}
+                                        onChange={(e) =>
+                                            setDocumentAssignment({
+                                                ...documentAssignment,
+                                                dueDate: e.target.value
+                                            })
+                                        }
+                                        required
+                                    />
+
+                                    <button type="submit">
+                                        🚀 Create Document Assignment
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowDocumentAssignmentForm(false)
+                                        }
+                                    >
+                                        Cancel
+                                    </button>
+
+                                </form>
+
+                            </div>
                         )}
 
                         <hr />
@@ -2150,6 +2372,8 @@ function TutorClassroom() {
                     </div>
 
                 )}
+
+                {/* ================================= */}
 
                 {/* ================================= */}
                 {/* LESSONS */}
@@ -3100,6 +3324,8 @@ const styles = {
 };
 
 export default TutorClassroom;
+
+
 
 
 

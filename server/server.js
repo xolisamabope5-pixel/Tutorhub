@@ -285,6 +285,23 @@ app.use(
     submissionRoutes
 );
 
+// =====================================================
+// DOCUMENT ASSIGNMENTS
+// =====================================================
+
+app.use(
+    "/api/document-assignments",
+    require("./routes/documentAssignmentRoutes")
+);
+
+// =====================================================
+// DOCUMENT SUBMISSIONS
+// =====================================================
+
+app.use(
+    "/api/document-submissions",
+    require("./routes/documentSubmissionRoutes")
+);
 
 // =====================================================
 // TEST ROUTE
