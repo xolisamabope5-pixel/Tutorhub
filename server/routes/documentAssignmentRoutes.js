@@ -31,7 +31,7 @@ const storage = new CloudinaryStorage({
 
         folder: "tutorhub/document-assignments",
 
-        resource_type: "auto",
+        resource_type: "raw",
 
         allowed_formats: [
             "pdf",
@@ -351,4 +351,5 @@ router.delete(
 
 
 module.exports = router;
+
 
