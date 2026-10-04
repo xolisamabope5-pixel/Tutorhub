@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const router = express.Router();
 
 const multer = require("multer");
@@ -31,7 +31,9 @@ const storage = new CloudinaryStorage({
 
         folder: "tutorhub/document-assignments",
 
-        resource_type: "raw",
+        resource_type: "auto",
+        use_filename: true,
+        unique_filename: true,
 
         allowed_formats: [
             "pdf",
@@ -178,6 +180,92 @@ router.post(
                 error:
                     error.message
 
+            });
+
+        }
+
+    }
+);
+
+
+// =============================================
+// VIEW DOCUMENT FILE
+// =============================================
+
+router.get(
+    "/view/:id",
+    async (req, res) => {
+
+        try {
+
+            const assignment =
+                await DocumentAssignment.findById(
+                    req.params.id
+                );
+
+            if (!assignment) {
+
+                return res.status(404).json({
+                    message:
+                        "Document assignment not found."
+                });
+
+            }
+
+            if (!assignment.document) {
+
+                return res.status(404).json({
+                    message:
+                        "Assignment document not found."
+                });
+
+            }
+
+            const fileResponse =
+                await fetch(assignment.document);
+
+            if (!fileResponse.ok) {
+
+                return res.status(502).json({
+                    message:
+                        "Could not retrieve assignment document."
+                });
+
+            }
+
+            const contentType =
+                assignment.documentName
+                    ?.toLowerCase()
+                    .endsWith(".pdf")
+                    ? "application/pdf"
+                    : "application/octet-stream";
+
+            const buffer =
+                Buffer.from(
+                    await fileResponse.arrayBuffer()
+                );
+
+            res.setHeader(
+                "Content-Type",
+                contentType
+            );
+
+            res.setHeader("Content-Disposition", `inline; filename="${assignment.documentName || "assignment"}"`);
+
+            res.send(buffer);
+
+        } catch (error) {
+
+            console.log(
+                "View document error:",
+                error
+            );
+
+            res.status(500).json({
+                message:
+                    "Could not open assignment document.",
+                error:
+                    error.message
             });
 
         }
@@ -351,5 +439,8 @@ router.delete(
 
 
 module.exports = router;
+
+
+
 
 
