@@ -41,7 +41,8 @@ router.post("/login", async (req, res) => {
     try {
 
         const { username, email, password } = req.body;
-        const loginIdentifier = String(email || username || "").trim().toLowerCase();
+        const loginIdentifier = String(email || username || "").trim();
+        const emailIdentifier = loginIdentifier.toLowerCase();
 
 
         // =============================================
@@ -65,7 +66,7 @@ router.post("/login", async (req, res) => {
         // =============================================
 
         const admin =
-            await Admin.findOne({ username: loginIdentifier });
+            await Admin.findOne({ $or: [{ username: loginIdentifier }, { username: emailIdentifier }] });
 
 
         if (!admin) {

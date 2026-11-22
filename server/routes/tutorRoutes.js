@@ -622,7 +622,8 @@ router.post("/login", async (req, res) => {
     try {
 
         const { username, email, password } = req.body;
-        const loginIdentifier = (email || username || "").toLowerCase().trim();
+        const loginIdentifier = String(email || username || "").trim();
+        const emailIdentifier = loginIdentifier.toLowerCase();
 
 
         // =============================================
@@ -631,7 +632,10 @@ router.post("/login", async (req, res) => {
 
         const tutor =
             await Tutor.findOne({
-                $or: [{ email: loginIdentifier }, { username: loginIdentifier }]
+                $or: [
+                    { email: emailIdentifier },
+                    { username: loginIdentifier }
+                ]
             });
 
 
