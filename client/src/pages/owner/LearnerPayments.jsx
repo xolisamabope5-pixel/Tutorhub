@@ -1,3 +1,4 @@
+import API_URL from "../../api.js";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import BackButton from "../../components/BackButton";
@@ -34,7 +35,7 @@ function LearnerPayments(){
 
             const response = await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/payments/learner/${id}`
+                `${API_URL}/api/payments/learner/${id}`
 
             );
 
@@ -71,7 +72,7 @@ function LearnerPayments(){
 
             await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/payments/${paymentId}/approve`,
+                `${API_URL}/api/payments/${paymentId}/approve`,
 
                 {
 
@@ -118,7 +119,7 @@ function LearnerPayments(){
 
             await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/payments/${paymentId}/reject`,
+                `${API_URL}/api/payments/${paymentId}/reject`,
 
                 {
 

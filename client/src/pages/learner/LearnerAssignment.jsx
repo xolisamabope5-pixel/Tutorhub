@@ -1,7 +1,15 @@
+import API_URL from "../../api.js";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import BackButton from "../../components/BackButton";
+import "../../styles/learner-assignments.css";
 
+const assignmentFileUrl = (value) => {
+    if (!value) return "";
+    const url = String(value).trim();
+    if (/^https?:\/\//i.test(url) || url.startsWith("blob:") || url.startsWith("data:")) return url;
+    return `${API_URL.replace(/\/$/, "")}/${url.replace(/^\//, "")}`;
+};
 
 function LearnerAssignment(){
 
@@ -38,7 +46,7 @@ try{
 
 const response = await fetch(
 
-`https://tutorhub-api-bz1y.onrender.com/api/assignments/${id}`
+`${API_URL}/api/assignments/${id}`
 
 );
 
@@ -51,9 +59,9 @@ setAssignment(data);
 
 
 
-const emptyAnswers = data.questions.map(()=>({
+const emptyAnswers = (data.questions || []).map((question)=>({
 
-questionId:"",
+questionId: question._id,
 
 answer:""
 
@@ -104,7 +112,7 @@ return;
 
 const response = await fetch(
 
-`https://tutorhub-api-bz1y.onrender.com/api/submissions/learner/${learner._id}/${id}`
+`${API_URL}/api/submissions/learner/${learner._id}/${id}`
 
 );
 
@@ -177,7 +185,7 @@ localStorage.getItem("learner")
 
 const response = await fetch(
 
-"https://tutorhub-api-bz1y.onrender.com/api/submissions/upload",
+`${API_URL}/api/submissions/create`,
 
 {
 
@@ -279,7 +287,7 @@ return(
 
 </p>
 
-
+{assignment.attachment && <section className="th-assignment-resource"><div><span className="th-assignment-file-icon">↓</span><div><strong>Assignment attachment</strong><small>Download the supporting file.</small></div></div><a href={assignmentFileUrl(assignment.attachment)} target="_blank" rel="noreferrer" download>Download file</a></section>}
 
 
 <p>

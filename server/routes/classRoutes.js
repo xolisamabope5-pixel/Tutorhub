@@ -4,6 +4,7 @@ const router = express.Router();
 
 const Class = require("../models/Class");
 const Assignment = require("../models/Assignment");
+const Learner = require("../models/learner");
 
 
 
@@ -185,6 +186,44 @@ router.get("/program/:programId/:grade", async (req, res) => {
 
 });
 
+
+
+// =====================================
+// GET BROWSE CLASSES FOR A LEARNER
+// Centre learners see every class in their centre/grade.
+// Independent-tutor learners see classes belonging to their assigned tutor/grade.
+// =====================================
+router.get("/browse/learner/:learnerId", async (req, res) => {
+    try {
+        const learner = await Learner.findById(req.params.learnerId).select("programId tutorId grade");
+        if (!learner) return res.status(404).json({ message: "Learner account was not found." });
+        const gradeText = String(learner.grade || "").trim();
+        if (!gradeText) return res.json([]);
+
+        const gradeNumber = gradeText.match(/\d+/)?.[0];
+        const gradeQuery = gradeNumber
+            ? { $regex: `(^|[^0-9])${gradeNumber}([^0-9]|$)`, $options: "i" }
+            : { $regex: `^${gradeText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" };
+
+        let scope = null;
+        if (learner.programId) {
+            scope = { programId: learner.programId };
+        } else if (learner.tutorId) {
+            scope = { tutorId: learner.tutorId, $or: [{ programId: null }, { programId: { $exists: false } }] };
+        } else {
+            return res.json([]);
+        }
+
+        const classes = await Class.find({ ...scope, grade: gradeQuery })
+            .populate("tutorId", "name surname subjects")
+            .populate("learners", "name surname grade school username")
+            .sort({ createdAt: -1 });
+        res.json(classes);
+    } catch (error) {
+        console.error("Browse classes for learner failed:", error);
+        res.status(500).json({ message: "Could not fetch classes for this learner.", error: error.message });
+    }
+});
 
 
 // =====================================

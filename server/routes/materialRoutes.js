@@ -9,6 +9,7 @@ const { v2: cloudinary } = require("cloudinary");
 
 const Material = require("../models/Material");
 const Class = require("../models/Class");
+const { authenticate } = require("../middleware/authMiddleware");
 
 
 // =====================================================
@@ -91,6 +92,8 @@ router.post(
 
     "/upload",
 
+    authenticate,
+
     upload.single("file"),
 
     async (req, res) => {
@@ -133,6 +136,14 @@ router.post(
             const classroom =
                 await Class.findById(classId);
 
+
+            const canManage = req.user.role === "admin" || (["teacher", "owner"].includes(req.user.role) && String(classroom?.tutorId) === String(req.user.id));
+            if (classroom && !canManage) {
+                if (req.file?.filename) {
+                    try { await cloudinary.uploader.destroy(req.file.filename, { resource_type: req.file.resource_type || "image" }); } catch (cleanupError) { console.error("Material cleanup error:", cleanupError); }
+                }
+                return res.status(403).json({ message: "Only the tutor assigned to this classroom can upload materials." });
+            }
 
             if (!classroom) {
 
@@ -194,7 +205,7 @@ router.post(
 
                     classId,
 
-                    uploadedBy
+                    uploadedBy: req.user.id
 
                 });
 

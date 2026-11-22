@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import OwnerTutorHubPayment from "./pages/owner/OwnerTutorHubPayment";
 import TutorClassroom from "./pages/TutorClassroom";
 import Home from "./pages/Home";
@@ -10,16 +10,22 @@ import TutorMaterials from "./pages/TutorMaterials";
 import Navbar from "./components/Navbar";
 import Footer from "./components/footer";
 import TutorSubmissions from "./pages/TutorSubmissions";
+import TutorDocumentSubmissions from "./pages/TutorDocumentSubmissions";
 import LearnerDashboard from "./pages/LearnerDashboard";
 import TeacherClasses from "./pages/owner/TeacherClasses";
 import TutorRegister from "./pages/TutorRegister";
 import TutorLogin from "./pages/TutorLogin";
 import TutorDashboard from "./pages/TutorDashboard";
 import LearnerAssignment from "./pages/learner/LearnerAssignment";
+import LearnerDocumentAssignment from "./pages/learner/LearnerDocumentAssignment";
 import Classroom from "./pages/Classroom";
 import TutorMarkSubmission from "./pages/TutorMarkSubmission";
 import CreateClass from "./pages/CreateClass";
 import ManageTeacher from "./pages/ManageTeacher";
+import InAppResourceViewer from "./components/InAppResourceViewer";
+import DashboardSidebar from "./components/DashboardSidebar";
+import Inbox from "./pages/Inbox";
+import Attendance from "./pages/Attendance";
 
 
 
@@ -32,6 +38,7 @@ import Announcements from "./pages/learner/Announcements";
 import Payments from "./pages/learner/Payments";
 import Profile from "./pages/learner/Profile";
 import BrowseClasses from "./pages/learner/BrowseClasses";
+import LearnerResults from "./pages/learner/Results";
 
 
 
@@ -45,52 +52,70 @@ import Learners from "./pages/owner/Learners";
 import OwnerPayments from "./pages/owner/Payments";
 import Reports from "./pages/owner/Reports";
 import OwnerSettings from "./pages/owner/OwnerSettings";
+import OwnerMyClasses from "./pages/owner/OwnerMyClasses";
 
 
 
 
 
-function App() {
+function AppContent() {
+    const location = useLocation();
+    const path = location.pathname;
+    const savedTutorRole = (() => { try { return JSON.parse(localStorage.getItem("tutor") || "{}").role; } catch { return null; } })();
+    const inboxSession = path === "/inbox" ? (() => { try { return localStorage.getItem("learner") ? "learner" : localStorage.getItem("adminLoggedIn") === "true" ? "admin" : (() => { try { return JSON.parse(localStorage.getItem("tutor") || "{}").role === "owner" ? "owner" : "tutor"; } catch { return "tutor"; } })(); } catch { return "learner"; } })() : null;
+    const sidebarRole = path === "/admin" ? null : path === "/attendance" ? (() => { try { return JSON.parse(localStorage.getItem("tutor") || "{}").role === "owner" ? "owner" : "tutor"; } catch { return "tutor"; } })() : path === "/inbox" ? inboxSession : path.startsWith("/admin") && path !== "/admin-login" ? "admin"
+        : (path.startsWith("/owner") || path.startsWith("/teacher-classes") || path.startsWith("/manage-learner") || path.startsWith("/manage-teacher") || path.startsWith("/owner-payment")) ? "owner"
+        : ((path.startsWith("/tutor-") && !["/tutor-login", "/tutor-register"].includes(path)) || path === "/create-class" || path.startsWith("/mark-submission")) ? (savedTutorRole === "owner" && (path === "/create-class" || path.startsWith("/tutor-classroom/")) ? "owner" : "tutor")
+        : path.startsWith("/learner") ? "learner" : path.startsWith("/classroom") ? (savedTutorRole === "owner" ? "owner" : localStorage.getItem("tutor") ? "tutor" : "learner") : null;
 
+const isWorkspace = Boolean(sidebarRole) || path === "/admin";
 
 return (
 
-<BrowserRouter>
+<div className={sidebarRole ? "th-app-with-sidebar" : isWorkspace ? "th-app th-admin-app" : "th-app"}>
 
-
-<Navbar />
+{sidebarRole && <DashboardSidebar role={sidebarRole} />}
+<InAppResourceViewer />
+{!isWorkspace && <Navbar />}
 
 
 <Routes>
+<Route path="/inbox" element={<Inbox />} />
+<Route path="/attendance" element={<Attendance />} />
 
 
 
-<Route 
-path="/teacher-classes/:id" 
-element={<TeacherClasses />} 
+<Route
+path="/teacher-classes/:id"
+element={<TeacherClasses />}
 />
 
 
 
-<Route 
-path="/manage-learner/:id" 
-element={<ManageLearner/>} 
+<Route
+path="/manage-learner/:id"
+element={<ManageLearner/>}
 />
 
 
 
-<Route 
-path="/tutor-materials/:id" 
-element={<TutorMaterials />} 
+<Route
+path="/tutor-materials/:id"
+element={<TutorMaterials />}
 />
 
 
 
 
 
-<Route 
-path="/learner/assignment/:id" 
-element={<LearnerAssignment />} 
+<Route
+path="/learner/assignment/:id"
+element={<LearnerAssignment />}
+/>
+
+<Route
+path="/learner/document-assignment/:id"
+element={<LearnerDocumentAssignment />}
 />
 
 
@@ -100,10 +125,8 @@ element={<LearnerAssignment />}
 />
 
 
-<Route 
-path="/tutor-submissions/:id" 
-element={<TutorSubmissions/>}
-/>
+<Route path="/tutor-submissions/:id" element={<TutorSubmissions/>} />
+<Route path="/tutor-document-submissions/:id" element={<TutorDocumentSubmissions/>} />
 
 
 
@@ -111,9 +134,9 @@ element={<TutorSubmissions/>}
 
 
 
-<Route 
-path="/tutor-classroom/:id" 
-element={<TutorClassroom />} 
+<Route
+path="/tutor-classroom/:id"
+element={<TutorClassroom />}
 />
 
 
@@ -124,15 +147,15 @@ element={<TutorClassroom />}
 
 {/* Tutor marking submission */}
 
-<Route 
-path="/mark-submission/:id" 
+<Route
+path="/mark-submission/:id"
 element={<TutorMarkSubmission />}
 />
 
 
 
-<Route 
-path="/tutor/mark-submission/:id" 
+<Route
+path="/tutor/mark-submission/:id"
 element={<TutorMarkSubmission />}
 />
 
@@ -143,33 +166,33 @@ element={<TutorMarkSubmission />}
 
 
 
-<Route 
-path="/owner-dashboard" 
-element={<OwnerHome />} 
+<Route
+path="/owner-dashboard"
+element={<OwnerHome />}
 />
 
 
 
 
-<Route 
-path="/create-class" 
-element={<CreateClass/>} 
+<Route
+path="/create-class"
+element={<CreateClass/>}
 />
 
 
 
 
-<Route 
-path="/owner-payment/:id" 
-element={<LearnerPayments />} 
+<Route
+path="/owner-payment/:id"
+element={<LearnerPayments />}
 />
 
 
 
 
-<Route 
-path="/manage-teacher/:id" 
-element={<ManageTeacher/>} 
+<Route
+path="/manage-teacher/:id"
+element={<ManageTeacher/>}
 />
 
 
@@ -183,57 +206,59 @@ element={<ManageTeacher/>}
 {/* Learner pages */}
 
 
-<Route 
-path="/learner/classes" 
-element={<MyClasses />} 
+<Route
+path="/learner/classes"
+element={<MyClasses />}
 />
 
 
 
 
-<Route 
-path="/learner/assignments" 
-element={<Assignments />} 
+<Route
+path="/learner/assignments"
+element={<Assignments />}
+/>
+
+<Route path="/learner/results" element={<LearnerResults />} />
+
+
+
+
+<Route
+path="/learner/lessons"
+element={<Lessons />}
 />
 
 
 
 
-<Route 
-path="/learner/lessons" 
-element={<Lessons />} 
+<Route
+path="/learner/announcements"
+element={<Announcements />}
 />
 
 
 
 
-<Route 
-path="/learner/announcements" 
-element={<Announcements />} 
+<Route
+path="/learner/payments"
+element={<Payments />}
 />
 
 
 
 
-<Route 
-path="/learner/payments" 
-element={<Payments />} 
+<Route
+path="/learner/profile"
+element={<Profile />}
 />
 
 
 
 
-<Route 
-path="/learner/profile" 
-element={<Profile />} 
-/>
-
-
-
-
-<Route 
-path="/learner/browse-classes" 
-element={<BrowseClasses />} 
+<Route
+path="/learner/browse-classes"
+element={<BrowseClasses />}
 />
 
 
@@ -248,49 +273,51 @@ element={<BrowseClasses />}
 
 
 
-<Route 
-path="/owner-home" 
-element={<OwnerHome />} 
+<Route
+path="/owner-home"
+element={<OwnerHome />}
+/>
+
+<Route path="/owner-my-classes" element={<OwnerMyClasses />} />
+
+
+
+
+<Route
+path="/owner-teachers"
+element={<Teachers />}
 />
 
 
 
 
-<Route 
-path="/owner-teachers" 
-element={<Teachers />} 
+<Route
+path="/owner-learners"
+element={<Learners />}
 />
 
 
 
 
-<Route 
-path="/owner-learners" 
-element={<Learners />} 
+<Route
+path="/owner-payments"
+element={<OwnerPayments />}
 />
 
 
 
 
-<Route 
-path="/owner-payments" 
-element={<OwnerPayments />} 
+<Route
+path="/owner-reports"
+element={<Reports />}
 />
 
 
 
 
-<Route 
-path="/owner-reports" 
-element={<Reports />} 
-/>
-
-
-
-
-<Route 
-path="/owner-settings" 
-element={<OwnerSettings />} 
+<Route
+path="/owner-settings"
+element={<OwnerSettings />}
 />
 
 
@@ -305,25 +332,25 @@ element={<OwnerSettings />}
 
 
 
-<Route 
-path="/" 
-element={<Home />} 
+<Route
+path="/"
+element={<Home />}
 />
 
 
 
 
-<Route 
-path="/register" 
-element={<Register />} 
+<Route
+path="/register"
+element={<Register />}
 />
 
 
 
 
-<Route 
-path="/login" 
-element={<Login />} 
+<Route
+path="/login"
+element={<Login />}
 />
 
 
@@ -338,9 +365,9 @@ element={<Login />}
 
 
 
-<Route 
-path="/learner-dashboard" 
-element={<LearnerDashboard />} 
+<Route
+path="/learner-dashboard"
+element={<LearnerDashboard />}
 />
 
 
@@ -355,17 +382,17 @@ element={<LearnerDashboard />}
 
 
 
-<Route 
-path="/admin-login" 
-element={<AdminLogin />} 
+<Route
+path="/admin-login"
+element={<AdminLogin />}
 />
 
 
 
 
-<Route 
-path="/admin" 
-element={<Admin />} 
+<Route
+path="/admin"
+element={<Admin />}
 />
 
 
@@ -380,25 +407,25 @@ element={<Admin />}
 
 
 
-<Route 
-path="/tutor-register" 
-element={<TutorRegister />} 
+<Route
+path="/tutor-register"
+element={<TutorRegister />}
 />
 
 
 
 
-<Route 
-path="/tutor-login" 
-element={<TutorLogin />} 
+<Route
+path="/tutor-login"
+element={<TutorLogin />}
 />
 
 
 
 
-<Route 
-path="/tutor-dashboard" 
-element={<TutorDashboard />} 
+<Route
+path="/tutor-dashboard"
+element={<TutorDashboard />}
 />
 
 
@@ -413,9 +440,9 @@ element={<TutorDashboard />}
 
 
 
-<Route 
-path="/classroom/:id" 
-element={<Classroom />} 
+<Route
+path="/classroom/:id"
+element={<Classroom />}
 />
 
 
@@ -424,16 +451,17 @@ element={<Classroom />}
 </Routes>
 
 
-<Footer />
+{!isWorkspace && <Footer />}
 
 
-</BrowserRouter>
+</div>
 
 
 );
-
-
 }
 
+function App() {
+    return <BrowserRouter><AppContent /></BrowserRouter>;
+}
 
 export default App;

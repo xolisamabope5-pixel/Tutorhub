@@ -1,6 +1,8 @@
+import API_URL from "../api.js";
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "../styles/tutor-dashboard.css";
 
 function TutorDashboard() {
 
@@ -60,7 +62,7 @@ function TutorDashboard() {
             }
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/tutor/${tutorId}`
+                `${API_URL}/api/classes/tutor/${tutorId}`
             );
 
             const data = await response.json();
@@ -149,7 +151,7 @@ function TutorDashboard() {
 
             const response = await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/${classId}`,
+                `${API_URL}/api/classes/${classId}`,
 
                 {
 
@@ -268,31 +270,20 @@ function TutorDashboard() {
     // =========================================
 
     return (
-
-        <div
-            style={{
-                padding: "30px",
-                maxWidth: "1200px",
-                margin: "0 auto"
-            }}
-        >
+        <>
+        <main className="th-tutor-dashboard">
 
             {/* =================================
                 WELCOME
             ================================= */}
 
-            <h1>
+            <header className="th-tutor-welcome">
+                <div><span className="th-tutor-eyebrow">TUTOR WORKSPACE</span><h1>Welcome {tutor?.name} 👋</h1><p>Manage your classes, learners and teaching activities.</p></div>
+                <button className="th-tutor-primary" onClick={() => navigate("/create-class")}>+ Create Class</button>
+            </header>
 
-                Welcome {tutor?.name} 👋
 
-            </h1>
-
-
-            <h2>
-
-                TutorHub Tutor Dashboard
-
-            </h2>
+            <h2 className="th-tutor-section-title">TutorHub overview</h2>
 
 
             <hr
@@ -306,16 +297,7 @@ function TutorDashboard() {
                 MY CLASSES
             ================================= */}
 
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: "20px",
-                    flexWrap: "wrap",
-                    marginBottom: "10px"
-                }}
-            >
+            <div className="th-tutor-classes-heading">
 
                 <div>
 
@@ -336,23 +318,7 @@ function TutorDashboard() {
                     CREATE CLASS
                 ================================= */}
 
-                <button
-                    onClick={() =>
-                        navigate("/create-class")
-                    }
-                    style={{
-                        padding: "12px 20px",
-                        border: "none",
-                        borderRadius: "8px",
-                        backgroundColor: "#2563eb",
-                        color: "#fff",
-                        cursor: "pointer",
-                        fontSize: "15px",
-                        fontWeight: "600"
-                    }}
-                >
-                    + Create Class
-                </button>
+
 
             </div>
 
@@ -361,27 +327,11 @@ function TutorDashboard() {
                 CLASS LIST
             ================================= */}
 
-            <div
-                style={{
-                    display: "flex",
-                    gap: "20px",
-                    flexWrap: "wrap",
-                    marginTop: "20px",
-                    marginBottom: "40px"
-                }}
-            >
+            <div className="th-tutor-class-grid">
 
                 {classes.length === 0 ? (
 
-                    <div
-                        style={{
-                            border: "1px solid #ddd",
-                            padding: "30px",
-                            borderRadius: "12px",
-                            backgroundColor: "#fff",
-                            width: "100%"
-                        }}
-                    >
+                    <div className="th-tutor-empty-state">
 
                         <h3>
                             📚 No classes yet
@@ -396,16 +346,6 @@ function TutorDashboard() {
                             onClick={() =>
                                 navigate("/create-class")
                             }
-                            style={{
-                                padding: "11px 18px",
-                                border: "none",
-                                borderRadius: "8px",
-                                backgroundColor: "#2563eb",
-                                color: "#fff",
-                                cursor: "pointer",
-                                fontSize: "14px",
-                                fontWeight: "600"
-                            }}
                         >
                             + Create Your First Class
                         </button>
@@ -421,15 +361,7 @@ function TutorDashboard() {
                                 key={
                                     classroom._id
                                 }
-                                style={{
-                                    border: "1px solid #ddd",
-                                    padding: "20px",
-                                    borderRadius: "12px",
-                                    minWidth: "250px",
-                                    backgroundColor: "#fff",
-                                    cursor: "pointer",
-                                    transition: "0.2s"
-                                }}
+                                className="th-tutor-class-card"
                                 onClick={() =>
                                     navigate(
                                         `/tutor-classroom/${classroom._id}`
@@ -548,8 +480,8 @@ function TutorDashboard() {
 
             </button>
 
-        </div>
-
+        </main>
+        </>
     );
 
 }

@@ -1,3 +1,4 @@
+import API_URL from "../../api.js";
 import {
     useEffect,
     useState
@@ -148,7 +149,7 @@ function Payments() {
                 const response =
                     await fetch(
 
-                        `https://tutorhub-api-bz1y.onrender.com/api/payments/program/${programId}`
+                        `${API_URL}/api/payments/program/${programId}`
 
                     );
 
@@ -221,7 +222,7 @@ function Payments() {
                 const response =
                     await fetch(
 
-                        `https://tutorhub-api-bz1y.onrender.com/api/payments/learner/${id}`
+                        `${API_URL}/api/payments/learner/${id}`
 
                     );
 
@@ -370,7 +371,7 @@ function Payments() {
                 const response =
                     await fetch(
 
-                        "https://tutorhub-api-bz1y.onrender.com/api/payments/create",
+                        `${API_URL}/api/payments/create`,
 
                         {
 

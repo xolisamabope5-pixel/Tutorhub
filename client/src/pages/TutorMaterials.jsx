@@ -1,3 +1,4 @@
+import API_URL from "../api.js";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -39,7 +40,7 @@ function TutorMaterials(){
 
             const response = await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/${id}`
+                `${API_URL}/api/classes/${id}`
 
             );
 
@@ -146,7 +147,7 @@ function TutorMaterials(){
 
             const response = await fetch(
 
-                "https://tutorhub-api-bz1y.onrender.com/api/materials/upload",
+                `${API_URL}/api/materials/upload`,
 
                 {
 

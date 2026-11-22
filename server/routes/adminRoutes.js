@@ -9,6 +9,7 @@ const PlatformSettings = require("../models/PlatformSettings");
 const Tutor = require("../models/Tutor");
 const Learner = require("../models/learner");
 const Program = require("../models/Program");
+const ProviderReview = require("../models/ProviderReview");
 
 const {
     authenticate,
@@ -36,6 +37,117 @@ router.use(
     authenticate,
     authorizeRoles("admin")
 );
+
+
+// Unified provider management: tuition centres and independent tutors.
+router.get('/providers', async (req, res) => {
+    try {
+        const programs = await Program.find()
+            .populate('ownerId', 'name surname email phone subjects status subscriptionStatus tutorhubPaymentProof')
+            .sort({ createdAt: -1 }).lean();
+        const rows = await Promise.all(programs.map(async (program) => {
+            const owner = program.ownerId || {};
+            const [learnerCount, tutorCount] = await Promise.all([
+                Learner.countDocuments({ programId: program._id }),
+                Tutor.countDocuments({ programId: program._id, role: 'teacher' })
+            ]);
+            return {
+                _id: String(program._id), programId: String(program._id), ownerId: owner._id ? String(owner._id) : null,
+                providerType: program.providerType || 'tuition-centre', businessName: program.name,
+                ownerName: `${owner.name || ''} ${owner.surname || ''}`.trim(), email: owner.email || '',
+                status: program.status || 'Pending', subscriptionStatus: program.subscriptionStatus || 'Pending',
+                paymentProof: program.paymentProof || owner.tutorhubPaymentProof || '',
+                location: program.location || '', subjects: program.subjectsOffered || [],
+                expectedLearners: program.expectedLearners || 0, platformFee: program.platformFee || 0,
+                customQuoteRequired: !!program.customQuoteRequired,
+                learnerCount, tutorCount, createdAt: program.createdAt
+            };
+        }));
+        // Retain support for old independent tutor accounts that predate Program records.
+        const legacy = await Tutor.find({ role: 'owner', programId: null }).select('name surname email subjects status subscriptionStatus tutorhubPaymentProof createdAt').lean();
+        for (const owner of legacy) rows.push({
+            _id: `legacy-${owner._id}`, programId: null, ownerId: String(owner._id), providerType: 'private-tutor',
+            businessName: `${owner.name} ${owner.surname}`, ownerName: `${owner.name} ${owner.surname}`,
+            email: owner.email, status: owner.status || 'Pending', subscriptionStatus: owner.subscriptionStatus || 'Pending',
+            paymentProof: owner.tutorhubPaymentProof || '', location: '', subjects: owner.subjects ? [owner.subjects] : [],
+            learnerCount: await Learner.countDocuments({ tutorId: owner._id, programId: null }), tutorCount: 0, createdAt: owner.createdAt
+        });
+        res.json(rows);
+    } catch (error) {
+        console.error('Unified provider list error:', error);
+        res.status(500).json({ message: 'Could not load providers.' });
+    }
+});
+
+router.patch('/providers/:id/review', async (req, res) => {
+    try {
+        const { action, paymentVerified, note = '' } = req.body || {};
+        if (!['approve', 'reject', 'block', 'unblock', 'verify-payment'].includes(action))
+            return res.status(400).json({ message: 'Unsupported provider action.' });
+        if (typeof note !== 'string' || note.length > 1000)
+            return res.status(400).json({ message: 'Review note must be 1,000 characters or fewer.' });
+        const isLegacy = String(req.params.id).startsWith('legacy-');
+        const id = isLegacy ? req.params.id.slice(7) : req.params.id;
+        if (!require('mongoose').isValidObjectId(id)) return res.status(400).json({ message: 'Invalid provider ID.' });
+        const program = isLegacy ? null : await Program.findById(id);
+        const owner = program ? await Tutor.findById(program.ownerId) : await Tutor.findOne({ _id: id, role: 'owner', programId: null });
+        if (!owner || (!isLegacy && !program)) return res.status(404).json({ message: 'Provider not found.' });
+        const previousStatus = program ? program.status : owner.status;
+        if (action === 'approve') {
+            if (paymentVerified !== true) return res.status(400).json({ message: 'Confirm that you inspected and verified the TutorHub payment proof before approval.' });
+            if (!(program?.paymentProof || owner.tutorhubPaymentProof)) return res.status(400).json({ message: 'No TutorHub payment proof is on file.' });
+            owner.status = 'Approved'; owner.accountStatus = 'Active'; owner.subscriptionStatus = 'Paid';
+            if (program) { program.status = 'Active'; program.subscriptionStatus = 'Paid'; }
+        } else if (action === 'reject') {
+            owner.status = 'Rejected'; owner.accountStatus = 'Blocked';
+            if (program) { program.status = 'Rejected'; program.subscriptionStatus = 'Pending'; }
+        } else if (action === 'block') {
+            owner.accountStatus = 'Blocked';
+            if (program) { program.status = 'Blocked'; program.subscriptionStatus = 'Blocked'; }
+        } else if (action === 'unblock') {
+            owner.accountStatus = 'Active';
+            if (program) { program.status = 'Active'; if (program.subscriptionStatus === 'Blocked') program.subscriptionStatus = 'Pending'; }
+        } else if (action === 'verify-payment') {
+            if (paymentVerified !== true) return res.status(400).json({ message: 'Payment verification must be explicitly confirmed.' });
+            owner.subscriptionStatus = 'Paid';
+            if (program) program.subscriptionStatus = 'Paid';
+        }
+        await owner.save(); if (program) await program.save();
+        const auditAction = action === 'verify-payment' ? 'payment-verified' : `${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : action === 'block' ? 'blocked' : 'unblocked'}`;
+        await ProviderReview.create({ adminId: req.user.id, ownerId: owner._id, programId: program?._id || null, action: auditAction, paymentVerified: paymentVerified === true, note: note.trim(), previousStatus: previousStatus || '', newStatus: program?.status || owner.status || '' });
+        res.json({ message: 'Provider review saved.', provider: { ownerId: owner._id, programId: program?._id || null, status: program?.status || owner.status, subscriptionStatus: program?.subscriptionStatus || owner.subscriptionStatus } });
+    } catch (error) {
+        console.error('Provider review error:', error);
+        res.status(500).json({ message: 'Could not update provider.' });
+    }
+});
+
+router.get('/providers/:id/history', async (req, res) => {
+    try {
+        const id = String(req.params.id).replace(/^legacy-/, '');
+        if (!require('mongoose').isValidObjectId(id)) return res.status(400).json({ message: 'Invalid provider ID.' });
+        const program = await Program.findById(id).select('ownerId');
+        const ownerId = program?.ownerId || id;
+        const history = await ProviderReview.find({ ownerId }).populate('adminId', 'username').sort({ createdAt: -1 }).limit(100).lean();
+        res.json(history);
+    } catch (error) {
+        console.error('Provider history error:', error);
+        res.status(500).json({ message: 'Could not load provider history.' });
+    }
+});
+
+
+
+// Super Admin directory for tutors attached to tuition centres.
+router.get('/centre-tutors', async (req, res) => {
+  try {
+    const centreProgramIds = await Program.distinct('_id', { providerType: 'tuition-centre' });
+    const tutors = await Tutor.find({ role: 'teacher', programId: { $in: centreProgramIds } })
+      .populate('programId', 'name providerType').select('name surname email status accountStatus programId createdAt').sort({ createdAt: -1 }).lean();
+    res.json(tutors.map((t) => ({ ...t, programName: t.programId?.name || 'Centre unavailable' })));
+  } catch (error) { console.error('Centre tutor directory error:', error); res.status(500).json({ message: 'Could not load centre tutors.' }); }
+});
+
 
 
 // =====================================================
@@ -172,94 +284,28 @@ router.get("/programs", async (req, res) => {
 // APPROVE TUITION CENTRE
 // =====================================================
 
-router.put(
-    "/approve-program/:id",
-    async (req, res) => {
-
-        try {
-
-            const program =
-                await Program.findByIdAndUpdate(
-
-                    req.params.id,
-
-                    {
-                        status:
-                            "Active",
-
-                        subscriptionStatus:
-                            "Paid"
-                    },
-
-                    {
-                        new:
-                            true
-                    }
-
-                );
-
-
-            if (!program) {
-
-                return res.status(404).json({
-
-                    message:
-                        "Tuition centre not found"
-
-                });
-
-            }
-
-
-            // =============================================
-            // APPROVE OWNER
-            // =============================================
-
-            await Tutor.findByIdAndUpdate(
-
-                program.ownerId,
-
-                {
-                    status:
-                        "Approved",
-
-                    accountStatus:
-                        "Active"
-                }
-
-            );
-
-
-            res.json({
-
-                message:
-                    "Tuition centre approved successfully 🚀",
-
-                program
-
-            });
-
-
-        } catch (error) {
-
-            console.log(
-                "Approve program error:",
-                error
-            );
-
-
-            res.status(500).json({
-
-                message:
-                    "Could not approve tuition centre"
-
-            });
-
-        }
-
+router.put("/approve-program/:id", async (req, res) => {
+    try {
+        if (req.body?.paymentVerified !== true) return res.status(400).json({ message: "Confirm that you inspected and verified the TutorHub payment proof before approval." });
+        const program = await Program.findById(req.params.id);
+        if (!program) return res.status(404).json({ message: "Provider not found." });
+        if (!program.paymentProof) return res.status(400).json({ message: "No TutorHub payment proof is on file." });
+        const owner = await Tutor.findById(program.ownerId);
+        if (!owner) return res.status(404).json({ message: "Provider owner not found." });
+        const previousStatus = program.status;
+        program.status = "Active";
+        program.subscriptionStatus = "Paid";
+        owner.status = "Approved";
+        owner.accountStatus = "Active";
+        owner.subscriptionStatus = "Paid";
+        await Promise.all([program.save(), owner.save()]);
+        await ProviderReview.create({ adminId: req.user.id, ownerId: owner._id, programId: program._id, action: "approved", paymentVerified: true, previousStatus: previousStatus || "", newStatus: "Active", note: "Approved through legacy admin action." });
+        res.json({ message: "Provider approved successfully.", program });
+    } catch (error) {
+        console.error("Approve provider error:", error);
+        res.status(500).json({ message: "Could not approve provider." });
     }
-);
-
+});
 
 // =====================================================
 // BLOCK TUITION CENTRE
@@ -649,6 +695,49 @@ router.get(
 // ADMIN PLATFORM OVERVIEW
 // =====================================================
 
+
+
+// Independent private tutors (owner accounts not linked to a tuition centre).
+router.get("/private-tutors", async (req, res) => {
+    try {
+        const linkedPrograms = await Program.find({ providerType: "private-tutor" }).select("ownerId").lean();
+        const linkedIds = linkedPrograms.map((item) => item.ownerId).filter(Boolean);
+        const tutors = await Tutor.find({ role: "owner", $or: [{ programId: null }, { _id: { $in: linkedIds } }] })
+            .select("name surname email subjects status subscriptionStatus tutorhubPaymentProof createdAt programId")
+            .sort({ createdAt: -1 }).lean();
+        const result = await Promise.all(tutors.map(async (tutor) => ({
+            ...tutor,
+            learnerCount: await Learner.countDocuments({ tutorId: tutor._id })
+        })));
+        res.json(result);
+    } catch (error) {
+        console.error("Private tutor list error:", error);
+        res.status(500).json({ message: "Could not load private tutors." });
+    }
+});
+
+router.put("/private-tutors/:id/status", async (req, res) => {
+    try {
+        const { status, paymentVerified } = req.body;
+        if (!["Pending", "Approved", "Blocked"].includes(status)) {
+            return res.status(400).json({ message: "Invalid private tutor status." });
+        }
+        if (status === "Approved" && paymentVerified !== true) {
+            return res.status(400).json({ message: "Verify the tutor's payment proof before approval." });
+        }
+        const tutor = await Tutor.findOneAndUpdate(
+            { _id: req.params.id, role: "owner", programId: null },
+            { status, accountStatus: status === "Blocked" ? "Blocked" : "Active", ...(status === "Approved" ? { subscriptionStatus: "Paid" } : {}) },
+            { new: true }
+        ).select("name surname email subjects status subscriptionStatus");
+        if (!tutor) return res.status(404).json({ message: "Private tutor not found." });
+        res.json({ message: "Private tutor status updated.", tutor });
+    } catch (error) {
+        console.error("Private tutor status update error:", error);
+        res.status(500).json({ message: "Could not update private tutor." });
+    }
+});
+
 router.get(
     "/overview",
     async (req, res) => {
@@ -656,47 +745,39 @@ router.get(
         try {
 
             const totalCentres =
-                await Program.countDocuments();
+                await Program.countDocuments({ providerType: "tuition-centre" });
 
 
             const activeCentres =
-                await Program.countDocuments({
-
-                    status:
-                        "Active"
-
-                });
+                await Program.countDocuments({ providerType: "tuition-centre", status: "Active" });
 
 
             const blockedCentres =
-                await Program.countDocuments({
-
-                    status:
-                        "Blocked"
-
-                });
+                await Program.countDocuments({ providerType: "tuition-centre", status: "Blocked" });
 
 
             const pendingCentres =
-                await Program.countDocuments({
-
-                    status:
-                        "Pending"
-
-                });
+                await Program.countDocuments({ providerType: "tuition-centre", status: "Pending" });
 
 
             const totalLearners =
                 await Learner.countDocuments();
 
 
-            const totalTutors =
-                await Tutor.countDocuments({
+            const centreProgramIdsForTutorCount = await Program.distinct("_id", { providerType: "tuition-centre" });
+            const totalTutors = await Tutor.countDocuments({ role: "teacher", programId: { $in: centreProgramIdsForTutorCount } });
 
-                    role:
-                        "teacher"
+            // Independent tutor accounts are owners not attached to a centre.
+            const privateProgramOwners = await Program.distinct("ownerId", { providerType: "private-tutor" });
+            const legacyPrivateTutors = await Tutor.countDocuments({ role: "owner", programId: null });
+            const privateTutors = new Set(privateProgramOwners.map(String)).size + legacyPrivateTutors;
 
-                });
+            const centreProgramIds = await Program.distinct("_id", { providerType: "tuition-centre" });
+            const privateProgramIds = await Program.distinct("_id", { providerType: "private-tutor" });
+            const centreLearners = await Learner.countDocuments({ programId: { $in: centreProgramIds } });
+            const privateTutorLearners = await Learner.countDocuments({ $or: [ { programId: { $in: privateProgramIds } }, { programId: null } ] });
+            const pendingCentreTutorApplications = await Tutor.countDocuments({ role: "teacher", programId: { $in: centreProgramIds }, status: "Pending" });
+            const pendingPrivateTutors = await Program.countDocuments({ providerType: "private-tutor", status: "Pending" });
 
 
             const activeTutors =
@@ -728,6 +809,18 @@ router.get(
                 totalLearners,
 
                 totalTutors,
+
+                centreTutors: totalTutors,
+
+                privateTutors,
+
+                centreLearners,
+
+                privateTutorLearners,
+
+                pendingCentreTutorApplications,
+
+                pendingPrivateTutors,
 
                 activeTutors,
 
@@ -1004,6 +1097,8 @@ router.put(
 
     }
 );
+
+
 
 
 module.exports = router;

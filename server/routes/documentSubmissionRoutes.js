@@ -8,6 +8,18 @@ const { v2: cloudinary } = require("cloudinary");
 
 const DocumentSubmission =
     require("../models/DocumentSubmission");
+const DocumentAssignment = require("../models/DocumentAssignment");
+const Class = require("../models/Class");
+const { authenticate } = require("../middleware/authMiddleware");
+router.use(authenticate);
+const isTutor = (u) => ["teacher", "owner", "admin"].includes(u?.role);
+async function tutorOwnsAssignment(user, assignment) {
+    return user.role === "admin" || (isTutor(user) && String(assignment.tutorId) === String(user.id));
+}
+async function learnerBelongs(learnerId, assignment) {
+    const cls = await Class.findById(assignment.classId);
+    return !!cls && (cls.learners || []).some(id => String(id) === String(learnerId));
+}
 
 
 // =====================================================
@@ -86,19 +98,19 @@ router.post(
 
     "/create",
 
+    (req, res, next) => req.user?.role === "learner" ? next() : res.status(403).json({ message: "Learner access required." }),
     upload.array("files", 10),
 
     async (req, res) => {
 
         try {
 
-            const {
-
-                assignmentId,
-
-                learnerId
-
-            } = req.body;
+            const { assignmentId } = req.body;
+            if (!assignmentId) return res.status(400).json({ message: "Assignment ID is required." });
+            const learnerId = req.user.id;
+            const assignment = await DocumentAssignment.findById(assignmentId);
+            if (!assignment) return res.status(404).json({ message: "Assignment not found." });
+            if (!(await learnerBelongs(learnerId, assignment))) return res.status(403).json({ message: "You are not enrolled in this classroom." });
 
 
             // =================================================
@@ -199,6 +211,8 @@ router.post(
 
                 existingSubmission.mark =
                     null;
+                existingSubmission.resultVisible = false;
+                existingSubmission.resultVisibleAt = null;
 
                 existingSubmission.feedback =
                     "";
@@ -243,7 +257,8 @@ router.post(
                         null,
 
                     status:
-                        "Submitted"
+                        "Submitted",
+                    resultVisible: false
 
                 });
 
@@ -297,6 +312,10 @@ router.get(
     async (req, res) => {
 
         try {
+
+            const assignment = await DocumentAssignment.findById(req.params.assignmentId);
+            if (!assignment) return res.status(404).json({ message: "Assignment not found." });
+            if (!(await tutorOwnsAssignment(req.user, assignment))) return res.status(403).json({ message: "You do not own this assignment." });
 
             const submissions =
                 await DocumentSubmission.find({
@@ -355,11 +374,13 @@ router.get(
 
         try {
 
+            if (req.user.role !== "learner" || String(req.user.id) !== String(req.params.learnerId))
+                return res.status(403).json({ message: "You can only view your own submission." });
             const submission =
                 await DocumentSubmission.findOne({
 
                     learnerId:
-                        req.params.learnerId,
+                        req.user.id,
 
                     assignmentId:
                         req.params.assignmentId
@@ -381,11 +402,13 @@ router.get(
             }
 
 
-            res.json(
-
-                submission
-
-            );
+            const learnerView = submission.toObject();
+            if (learnerView.status !== "Marked" || learnerView.resultVisible !== true) {
+                learnerView.mark = null;
+                learnerView.feedback = "";
+                learnerView.markedDocument = null;
+            }
+            res.json(learnerView);
 
 
         } catch (error) {
@@ -437,17 +460,10 @@ router.get(
                 .populate("assignmentId");
 
 
-            if (!submission) {
-
-                return res.status(404).json({
-
-                    message:
-                        "Submission not found."
-
-                });
-
-            }
-
+            if (!submission) return res.status(404).json({ message: "Submission not found." });
+            const assignment = await DocumentAssignment.findById(submission.assignmentId);
+            const allowed = assignment && ((req.user.role === "learner" && String(submission.learnerId) === String(req.user.id)) || await tutorOwnsAssignment(req.user, assignment));
+            if (!allowed) return res.status(403).json({ message: "You cannot access this submission." });
 
             res.json(
 
@@ -552,17 +568,12 @@ router.put(
                 );
 
 
-            if (!submission) {
+            if (!submission) return res.status(404).json({ message: "Submission not found." });
+            const assignment = await DocumentAssignment.findById(submission.assignmentId);
+            if (!assignment || !(await tutorOwnsAssignment(req.user, assignment))) return res.status(403).json({ message: "You do not own this assignment." });
 
-                return res.status(404).json({
 
-                    message:
-                        "Submission not found."
-
-                });
-
-            }
-
+            if (numericMark > Number(assignment.totalMarks)) return res.status(400).json({ message: `Mark cannot exceed ${assignment.totalMarks}.` });
 
             // =================================================
             // SAVE MARK
@@ -582,6 +593,8 @@ router.put(
 
             submission.status =
                 "Marked";
+            submission.resultVisible = false;
+            submission.resultVisibleAt = null;
 
 
             await submission.save();
@@ -644,17 +657,9 @@ router.put(
                 );
 
 
-            if (!submission) {
-
-                return res.status(404).json({
-
-                    message:
-                        "Submission not found."
-
-                });
-
-            }
-
+            if (!submission) return res.status(404).json({ message: "Submission not found." });
+            const assignment = await DocumentAssignment.findById(submission.assignmentId);
+            if (!assignment || !(await tutorOwnsAssignment(req.user, assignment))) return res.status(403).json({ message: "You do not own this assignment." });
 
             if (!req.file) {
 
@@ -712,5 +717,37 @@ router.put(
 
 );
 
+
+
+// Tutor-controlled visibility for document assignment results.
+router.patch("/assignment/:assignmentId/visibility", async (req, res) => {
+    try {
+        if (!isTutor(req.user)) return res.status(403).json({ message: "Tutor access required." });
+        const assignment = await DocumentAssignment.findById(req.params.assignmentId);
+        if (!assignment) return res.status(404).json({ message: "Assignment not found." });
+        if (!(await tutorOwnsAssignment(req.user, assignment))) return res.status(403).json({ message: "You do not own this assignment." });
+        const visible = req.body.visible === true;
+        const result = await DocumentSubmission.updateMany(
+            { assignmentId: assignment._id, status: "Marked", mark: { $ne: null } },
+            { $set: { resultVisible: visible, resultVisibleAt: visible ? new Date() : null } }
+        );
+        return res.json({ message: visible ? "Marked results released." : "Results hidden.", modifiedCount: result.modifiedCount });
+    } catch (error) { return res.status(500).json({ message: "Could not update result visibility." }); }
+});
+
+router.patch("/:id/visibility", async (req, res) => {
+    try {
+        if (!isTutor(req.user)) return res.status(403).json({ message: "Tutor access required." });
+        const submission = await DocumentSubmission.findById(req.params.id);
+        if (!submission) return res.status(404).json({ message: "Submission not found." });
+        const assignment = await DocumentAssignment.findById(submission.assignmentId);
+        if (!assignment || !(await tutorOwnsAssignment(req.user, assignment))) return res.status(403).json({ message: "You do not own this assignment." });
+        if (submission.status !== "Marked" || submission.mark === null || submission.mark === undefined) return res.status(400).json({ message: "Mark this submission before releasing its result." });
+        submission.resultVisible = req.body.visible === true;
+        submission.resultVisibleAt = submission.resultVisible ? new Date() : null;
+        await submission.save();
+        return res.json({ message: submission.resultVisible ? "Result released." : "Result hidden.", submission });
+    } catch (error) { return res.status(500).json({ message: "Could not update result visibility." }); }
+});
 
 module.exports = router;

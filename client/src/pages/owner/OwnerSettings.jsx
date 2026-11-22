@@ -1,3 +1,4 @@
+import API_URL from "../../api.js";
 import { useEffect, useState } from "react";
 import BackButton from "../../components/BackButton";
 
@@ -69,7 +70,7 @@ function OwnerSettings(){
             const response = await fetch(
 
 
-                `https://tutorhub-api-bz1y.onrender.com/api/programs/owner/${ownerId}/settings`
+                `${API_URL}/api/programs/owner/${ownerId}/settings`
 
 
             );
@@ -182,7 +183,7 @@ function OwnerSettings(){
             const response = await fetch(
 
 
-                `https://tutorhub-api-bz1y.onrender.com/api/programs/owner/${savedOwner.id}/settings`,
+                `${API_URL}/api/programs/owner/${savedOwner.id}/settings`,
 
 
                 {
@@ -293,7 +294,7 @@ function OwnerSettings(){
             const response = await fetch(
 
 
-                `https://tutorhub-api-bz1y.onrender.com/api/tutors/${savedOwner.id}/change-password`,
+                `${API_URL}/api/tutors/${savedOwner.id}/change-password`,
 
 
                 {

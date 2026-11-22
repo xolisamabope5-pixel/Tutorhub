@@ -40,15 +40,10 @@ const tutorSchema = new mongoose.Schema({
 
 
 
-    username: {
+    // Existing usernames remain supported; new accounts authenticate by email.
+    username: { type:String, default: undefined, sparse:true },
 
-        type:String,
-
-        required:true,
-
-        unique:true
-
-    },
+    businessName: { type:String, default:"", trim:true },
 
 
 
@@ -69,11 +64,8 @@ const tutorSchema = new mongoose.Schema({
 
 
     subjects: {
-
-        type:String,
-
-        required:true
-
+        type: String,
+        default: ""
     },
 
 
@@ -138,6 +130,8 @@ const tutorSchema = new mongoose.Schema({
             "Pending",
 
             "Approved",
+
+            "Rejected",
 
             "Blocked"
 

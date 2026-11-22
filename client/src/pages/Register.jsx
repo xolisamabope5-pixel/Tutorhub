@@ -1,842 +1,98 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import API_URL from "../api";
+import "./Register.css";
 
+export default function Register() {
+  const [step, setStep] = useState(1);
+  const [providerType, setProviderType] = useState("");
+  const [providers, setProviders] = useState([]);
+  const [providerId, setProviderId] = useState("");
+  const [provider, setProvider] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [proof, setProof] = useState(null);
+  const [form, setForm] = useState({ name: "", surname: "", grade: "", email: "", password: "", confirmPassword: "", subject: "", tuitionOption: "" });
 
-function Register() {
-
-
-  const [programs, setPrograms] = useState([]);
-
-  const [tutors, setTutors] = useState([]);
-  const [selectedProgram, setSelectedProgram] = useState(null);
-
-
-  const [formData, setFormData] = useState({
-
-    name: "",
-    surname: "",
-    grade: "",
-    school: "",
-    subjects: "",
-    programId: "",
-    tutorId: "",
-    username: "",
-    password: "",
-    confirmPassword: ""
-
-  });
-
-
-
-  const [paymentProof, setPaymentProof] = useState(null);
-
-
-
-
-
-
-  // Load tuition centres
+  const api = useMemo(() => API_URL || "http://localhost:5000", []);
 
   useEffect(() => {
+    if (!providerType) return;
+    let cancelled = false;
+    fetch(`${api}/api/programs/providers?type=${providerType}`)
+      .then(r => r.json())
+      .then(data => { if (!cancelled) setProviders(Array.isArray(data) ? data : []); })
+      .catch(() => { if (!cancelled) setMessage("We could not load providers. Please try again."); });
+    return () => { cancelled = true; };
+  }, [providerType, api]);
 
-
-    fetchPrograms();
-
-
-  }, []);
-
-
-
-
-
-
-
-
-  const fetchPrograms = async () => {
-
-
+  const chooseProvider = async (id) => {
+    setProviderId(id); setProvider(null); setMessage("");
+    if (!id) return;
     try {
-
-
-      const response = await fetch(
-
-        "https://tutorhub-api-bz1y.onrender.com/api/programs"
-
-      );
-
-
+      const response = await fetch(`${api}/api/programs/providers/${id}/options`);
       const data = await response.json();
-
-
-      setPrograms(data);
-
-
-
-    } catch(error) {
-
-
-      console.log(error);
-
-
-    }
-
-
+      if (!response.ok) throw new Error(data.message || "Could not load provider details");
+      setProvider(data);
+      setForm(prev => ({ ...prev, subject: data.subjects?.[0] || "", tuitionOption: data.tuitionOptions?.[0] || "" }));
+      setStep(3);
+    } catch (error) { setMessage(error.message); }
   };
 
+  const update = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-
-
-
-
-
-
-
-  // Load tutors when tuition selected
-
-  const handleProgramChange = async(e)=>{
-
-
-    const programId = e.target.value;
-
-
-
-    setFormData({
-
-      ...formData,
-
-      programId,
-
-      tutorId:""
-
-    });
-
-
-
-
-    if(!programId) return;
-
-
-
-
-
-    try{
-
-
-      const response = await fetch(
-
-
-        `https://tutorhub-api-bz1y.onrender.com/api/programs/${programId}/tutors`
-
-
-      );
-
-
-
+  const submit = async e => {
+    e.preventDefault(); setMessage("");
+    if (form.password !== form.confirmPassword) return setMessage("Your passwords do not match.");
+    if (!proof) return setMessage("Please upload your payment proof.");
+    if (!provider) return setMessage("Please choose a provider first.");
+    setLoading(true);
+    try {
+      const body = new FormData();
+      Object.entries({ name: form.name, surname: form.surname, grade: form.grade, email: form.email, password: form.password, providerType, programId: providerId, subjects: form.subject, tuitionOption: form.tuitionOption }).forEach(([key, value]) => body.append(key, value || ""));
+      body.append("paymentProof", proof);
+      const response = await fetch(`${api}/api/learners/register`, { method: "POST", body });
       const data = await response.json();
-
-
-
-      setTutors(data);
-      const programResponse = await fetch(
-
-        `https://tutorhub-api-bz1y.onrender.com/api/programs/${programId}`
-
-      );
-
-      const programData = await programResponse.json();
-
-      setSelectedProgram(programData);
-
-
-    }catch(error){
-
-
-      console.log(error);
-
-
-    }
-
-
-
+      if (!response.ok) throw new Error(data.message || "Registration could not be submitted.");
+      setMessage("Application submitted successfully. Your selected provider will review it and notify you.");
+      setStep(4);
+    } catch (error) { setMessage(error.message || "Could not connect to TutorHub."); }
+    finally { setLoading(false); }
   };
 
-
-
-
-
-
-
-
-
-  const handleChange = (e) => {
-
-
-    setFormData({
-
-      ...formData,
-
-      [e.target.name]: e.target.value
-
-    });
-
-
-  };
-
-
-
-
-
-
-
-
-
-  const handleSubmit = async (e) => {
-
-
-    e.preventDefault();
-
-
-
-
-    if (
-
-      !formData.name ||
-
-      !formData.surname ||
-
-      !formData.grade ||
-
-      !formData.school ||
-
-      !formData.subjects ||
-
-      !formData.programId ||
-
-      !formData.tutorId ||
-
-      !formData.username ||
-
-      !formData.password ||
-
-      !formData.confirmPassword ||
-
-      !paymentProof
-
-    ) {
-
-
-      alert(
-
-        "Please complete all fields and select tuition/tutor."
-
-      );
-
-
-      return;
-
-
-    }
-
-
-
-
-
-
-
-
-    if(formData.password !== formData.confirmPassword){
-
-
-      alert("Passwords do not match!");
-
-      return;
-
-
-    }
-
-
-
-
-
-
-
-    try{
-
-
-
-      const form = new FormData();
-
-
-
-      form.append("name", formData.name);
-
-      form.append("surname", formData.surname);
-
-      form.append("grade", formData.grade);
-
-      form.append("school", formData.school);
-
-      form.append("subjects", formData.subjects);
-
-
-
-      // NEW CONNECTIONS
-
-      form.append("programId", formData.programId);
-
-      form.append("tutorId", formData.tutorId);
-
-
-
-      form.append("username", formData.username);
-
-      form.append("password", formData.password);
-
-
-
-      form.append(
-
-        "paymentProof",
-
-        paymentProof
-
-      );
-
-
-
-
-
-
-
-
-      const response = await fetch(
-
-        "https://tutorhub-api-bz1y.onrender.com/api/learners/register",
-
-        {
-
-          method:"POST",
-
-          body:form
-
-        }
-
-      );
-
-
-
-
-
-
-      const data = await response.json();
-
-
-
-
-
-      if(!response.ok){
-
-
-        alert(
-
-          data.message || "Registration failed"
-
-        );
-
-
-        return;
-
-
-      }
-
-
-
-
-
-
-      alert(
-
-        "Registration submitted. Waiting for approval 🚀"
-
-      );
-
-
-
-
-
-
-
-      setFormData({
-
-        name:"",
-        surname:"",
-        grade:"",
-        school:"",
-        subjects:"",
-        programId:"",
-        tutorId:"",
-        username:"",
-        password:"",
-        confirmPassword:""
-
-      });
-
-
-
-      setPaymentProof(null);
-
-
-
-      setTutors([]);
-
-
-
-
-
-    }catch(error){
-
-
-      console.log(error);
-
-
-      alert(
-
-        "Could not connect to server"
-
-      );
-
-
-    }
-
-
-
-  };
-
-
-
-
-
-
-
-
-
-  return (
-
-    <div>
-
-
-      <h1>TutorHub</h1>
-
-
-      <h2>Learner Registration</h2>
-
-
-      <p>
-
-        Register and join your chosen tuition centre.
-
-      </p>
-
-
-
-
-      <form onSubmit={handleSubmit}>
-
-
-
-
-
-        <input
-
-          type="text"
-
-          name="name"
-
-          placeholder="Name"
-
-          value={formData.name}
-
-          onChange={handleChange}
-
-        />
-
-
-
-
-
-        <input
-
-          type="text"
-
-          name="surname"
-
-          placeholder="Surname"
-
-          value={formData.surname}
-
-          onChange={handleChange}
-
-        />
-
-
-
-
-
-        <input
-
-          type="text"
-
-          name="grade"
-
-          placeholder="Grade"
-
-          value={formData.grade}
-
-          onChange={handleChange}
-
-        />
-
-
-
-
-
-        <input
-
-          type="text"
-
-          name="school"
-
-          placeholder="School"
-
-          value={formData.school}
-
-          onChange={handleChange}
-
-        />
-
-
-
-
-
-        <input
-
-          type="text"
-
-          name="subjects"
-
-          placeholder="Subjects"
-
-          value={formData.subjects}
-
-          onChange={handleChange}
-
-        />
-
-
-        {
-
-selectedProgram && (
-
-<div
-
-style={{
-
-border:"1px solid #ccc",
-
-padding:"15px",
-
-marginTop:"15px",
-
-marginBottom:"15px",
-
-borderRadius:"10px",
-
-background:"#f8f8f8"
-
-}}
-
->
-
-<h3>🏦 Tuition Centre Banking Details</h3>
-
-<p>
-
-<strong>Tuition Centre:</strong>
-
-{" "}
-
-{selectedProgram.name}
-
-</p>
-
-<p>
-
-<strong>Bank:</strong>
-
-{" "}
-
-{selectedProgram.bankName}
-
-</p>
-
-<p>
-
-<strong>Account Holder:</strong>
-
-{" "}
-
-{selectedProgram.accountHolder}
-
-</p>
-
-<p>
-
-<strong>Account Number:</strong>
-
-{" "}
-
-{selectedProgram.accountNumber}
-
-</p>
-
-<p>
-
-<strong>Branch Code:</strong>
-
-{" "}
-
-{selectedProgram.branchCode}
-
-</p>
-
-<p>
-
-<strong>Monthly Fee:</strong>
-
-{" "}
-
-R{selectedProgram.monthlyFee}
-
-</p>
-
-<p style={{color:"green"}}>
-
-✅ Please make payment using the details above, then upload your proof of payment below.
-
-</p>
-
-</div>
-
-)
-
+  return <main className="th-register-page">
+    <section className="th-register-shell">
+      <header className="th-register-header"><div className="th-register-logo">T</div><div><span>TutorHub</span><small>Find the right learning support</small></div></header>
+      <div className="th-register-progress"><span className={step >= 1 ? "done" : ""}>1</span><i/><span className={step >= 2 ? "done" : ""}>2</span><i/><span className={step >= 3 ? "done" : ""}>3</span></div>
+      {step === 1 && <>
+        <p className="th-register-eyebrow">LEARNER REGISTRATION</p><h1>Let's get you started.</h1><p className="th-register-muted">Just a few details to help you find the right tuition provider.</p>
+        <form onSubmit={e => { e.preventDefault(); setStep(2); }} className="th-register-form">
+          <div className="th-register-grid"><label>Name<input required name="name" value={form.name} onChange={update} placeholder="Your name"/></label><label>Surname<input required name="surname" value={form.surname} onChange={update} placeholder="Your surname"/></label></div>
+          <label>Current grade<select required name="grade" value={form.grade} onChange={update}><option value="">Choose your grade</option>{["Grade 1","Grade 2","Grade 3","Grade 4","Grade 5","Grade 6","Grade 7","Grade 8","Grade 9","Grade 10","Grade 11","Grade 12","Adult learner"].map(g=><option key={g}>{g}</option>)}</select></label>
+          <label>Email address<input required type="email" name="email" value={form.email} onChange={update} placeholder="you@example.com"/></label>
+          <div className="th-register-grid"><label>Password<input required minLength="8" type="password" name="password" value={form.password} onChange={update} placeholder="At least 8 characters"/></label><label>Confirm password<input required type="password" name="confirmPassword" value={form.confirmPassword} onChange={update} placeholder="Repeat password"/></label></div>
+          <button className="th-register-primary">Continue <span>→</span></button>
+        </form>
+      </>}
+      {step === 2 && <>
+        <p className="th-register-eyebrow">CHOOSE YOUR PROVIDER</p><h1>Who would you like to learn with?</h1><p className="th-register-muted">Choose the type of provider you want to join. You can browse the available options next.</p>
+        <div className="th-provider-type-grid"><button onClick={()=>{setProviderType("tuition-centre");setProviderId("");setProvider(null);}} className={providerType === "tuition-centre" ? "selected" : ""}><span className="th-provider-icon">▦</span><strong>Tuition Centre</strong><small>Join an organised tuition centre with its own tutors and classes.</small></button><button onClick={()=>{setProviderType("private-tutor");setProviderId("");setProvider(null);}} className={providerType === "private-tutor" ? "selected" : ""}><span className="th-provider-icon">♙</span><strong>Private Tutor</strong><small>Learn directly with an independent private tutor.</small></button></div>
+        {providerType && <div className="th-provider-list"><label>Available {providerType === "tuition-centre" ? "tuition centres" : "private tutors"}<select value={providerId} onChange={e=>chooseProvider(e.target.value)}><option value="">Select a provider</option>{providers.map(p=><option key={p._id} value={p._id}>{p.name}{p.location ? ` — ${p.location}` : ""}</option>)}</select></label>{providers.length === 0 && <small>No approved providers are currently listed in this category.</small>}</div>}
+        <button className="th-register-back" onClick={()=>setStep(1)}>← Back</button>
+      </>}
+      {step === 3 && provider && <>
+        <p className="th-register-eyebrow">YOUR SELECTED PROVIDER</p><h1>{provider.name}</h1><p className="th-register-muted">Review the available options and payment details before submitting your application.</p>
+        <div className="th-provider-summary"><span>{provider.providerType === "private-tutor" ? "PRIVATE TUTOR" : "TUITION CENTRE"}</span>{provider.location && <p>{provider.location}</p>}{provider.description && <p>{provider.description}</p>}</div>
+        <form onSubmit={submit} className="th-register-form">
+          {provider.subjects?.length > 0 && <label>Choose subject<select name="subject" value={form.subject} onChange={update}>{provider.subjects.map(s=><option key={s} value={s}>{s}</option>)}</select></label>}
+          {provider.tuitionOptions?.length > 0 && <label>Tuition option<select name="tuitionOption" value={form.tuitionOption} onChange={update}>{provider.tuitionOptions.map(s=><option key={s} value={s}>{s}</option>)}</select></label>}
+          {provider.monthlyFee > 0 && <div className="th-provider-fee"><small>Provider's listed monthly fee</small><strong>R{Number(provider.monthlyFee).toFixed(2)}</strong></div>}
+          <div className="th-provider-bank"><h3>Payment details</h3><p><span>Bank</span><strong>{provider.bankName || "Contact provider"}</strong></p><p><span>Account holder</span><strong>{provider.accountHolder || "Contact provider"}</strong></p><p><span>Account number</span><strong>{provider.accountNumber || "Contact provider"}</strong></p>{provider.branchCode && <p><span>Branch code</span><strong>{provider.branchCode}</strong></p>}</div>
+          <label>Upload payment proof (PDF, JPG or PNG)<input required type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onChange={e=>setProof(e.target.files?.[0] || null)}/></label>
+          <button disabled={loading} className="th-register-primary">{loading ? "Submitting application…" : "Submit application"}</button>
+        </form><button className="th-register-back" onClick={()=>setStep(2)}>← Choose another provider</button>
+      </>}
+      {step === 4 && <div className="th-register-success"><div>✓</div><h1>Application submitted</h1><p>{message}</p><p className="th-register-muted">Your provider will review your application and payment proof. You can sign in using your email address once your application is approved.</p></div>}
+      {message && step !== 4 && <div className="th-register-message" role="alert">{message}</div>}
+    </section>
+  </main>;
 }
-
-
-
-
-        <h3>Select Tuition Centre</h3>
-
-
-
-        <select
-
-          value={formData.programId}
-
-          onChange={handleProgramChange}
-
-        >
-
-
-          <option value="">Choose Tuition</option>
-
-
-          {
-
-            programs.map(program=>(
-
-
-              <option
-
-                key={program._id}
-
-                value={program._id}
-
-              >
-
-                {program.name}
-
-
-              </option>
-
-
-            ))
-
-          }
-
-
-        </select>
-
-
-
-
-
-
-
-
-        <h3>Select Tutor</h3>
-
-
-
-        <select
-
-          name="tutorId"
-
-          value={formData.tutorId}
-
-          onChange={handleChange}
-
-        >
-
-
-          <option value="">Choose Tutor</option>
-
-
-          {
-
-
-            tutors.map(tutor=>(
-
-
-              <option
-
-                key={tutor._id}
-
-                value={tutor._id}
-
-              >
-
-                {tutor.name} {tutor.surname}
-
-              </option>
-
-
-            ))
-
-          }
-
-
-
-        </select>
-
-
-
-
-
-
-
-
-        <label>
-
-          Upload Proof of Payment
-
-
-          <input
-
-            type="file"
-
-            onChange={(e)=>
-
-              setPaymentProof(e.target.files[0])
-
-            }
-
-          />
-
-
-        </label>
-
-
-
-
-
-
-
-
-        <input
-
-          type="text"
-
-          name="username"
-
-          placeholder="Create Username"
-
-          value={formData.username}
-
-          onChange={handleChange}
-
-        />
-
-
-
-
-
-
-        <input
-
-          type="password"
-
-          name="password"
-
-          placeholder="Create Password"
-
-          value={formData.password}
-
-          onChange={handleChange}
-
-        />
-
-
-
-
-
-
-        <input
-
-          type="password"
-
-          name="confirmPassword"
-
-          placeholder="Confirm Password"
-
-          value={formData.confirmPassword}
-
-          onChange={handleChange}
-
-        />
-
-
-
-
-
-
-        <button type="submit">
-
-          Create Account
-
-        </button>
-
-
-
-
-
-      </form>
-
-
-
-    </div>
-
-  );
-
-}
-
-
-export default Register;

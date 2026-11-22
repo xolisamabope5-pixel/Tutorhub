@@ -109,6 +109,9 @@ app.use(
     cors()
 );
 
+// LiveKit signatures are verified against the untouched raw request body.
+app.use("/api/livekit", require("./routes/livekitWebhookRoutes"));
+
 app.use(
     express.json()
 );
@@ -302,6 +305,18 @@ app.use(
     "/api/document-submissions",
     require("./routes/documentSubmissionRoutes")
 );
+
+// =====================================================
+app.use("/api/attendance", require("./routes/attendanceRoutes"));
+
+// PRIVATE INBOX
+// =====================================================
+app.use("/api/inbox", require("./routes/inboxRoutes"));
+app.use("/api/notifications", require("./routes/notificationRoutes"));
+
+// Provider-scoped workspace and learner application review
+app.use("/api/provider-workspace", require("./routes/providerWorkspaceRoutes"));
+
 
 // =====================================================
 // TEST ROUTE

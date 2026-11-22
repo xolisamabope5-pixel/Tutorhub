@@ -92,6 +92,50 @@ router.get("/:id/tutors", async (req, res) => {
 });
 
 
+
+// =====================================================
+// NEW PROVIDER DIRECTORY (tuition centres + independent tutors)
+// =====================================================
+router.get("/providers", async (req, res) => {
+    try {
+        const type = req.query.type;
+        const filter = { status: "Active" };
+        if (type === "private-tutor") filter.providerType = "private-tutor";
+        if (type === "tuition-centre") filter.$or = [{ providerType: "tuition-centre" }, { providerType: { $exists: false } }];
+        const providers = await Program.find(filter)
+            .populate("ownerId", "name surname businessName subjects email")
+            .select("name providerType location description subjectsOffered gradesOffered tuitionOptions monthlyFee bankName accountHolder accountNumber branchCode ownerId logo")
+            .sort({ name: 1 });
+        res.json(providers);
+    } catch (error) {
+        console.error("Provider directory error:", error);
+        res.status(500).json({ message: "Could not load available providers" });
+    }
+});
+
+router.get("/providers/:id/options", async (req, res) => {
+    try {
+        const provider = await Program.findOne({ _id: req.params.id, status: "Active" })
+            .populate("ownerId", "name surname businessName");
+        if (!provider) return res.status(404).json({ message: "Provider not found or not accepting learners" });
+        const tutors = provider.providerType === "tuition-centre"
+            ? await Tutor.find({ programId: provider._id, status: "Approved", accountStatus: "Active" }).select("name surname subjects")
+            : [];
+        res.json({
+            id: provider._id, name: provider.name, providerType: provider.providerType,
+            location: provider.location, description: provider.description,
+            subjects: provider.subjectsOffered?.length ? provider.subjectsOffered : (provider.ownerId?.subjects || "").split(",").map(x => x.trim()).filter(Boolean),
+            grades: provider.gradesOffered || [], tuitionOptions: provider.tuitionOptions || [],
+            monthlyFee: provider.monthlyFee, bankName: provider.bankName,
+            accountHolder: provider.accountHolder, accountNumber: provider.accountNumber,
+            branchCode: provider.branchCode, tutors
+        });
+    } catch (error) {
+        console.error("Provider options error:", error);
+        res.status(500).json({ message: "Could not load provider options" });
+    }
+});
+
 // =====================================================
 // GET SINGLE PROGRAM
 // =====================================================

@@ -69,3 +69,21 @@ button {
 button:hover {
   background: #1d4ed8;
 }
+.tutorhub-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d7deea;
+  border-radius: 9px;
+  background: #fff;
+  color: #17365d;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.tutorhub-back-button:hover {
+  background: #f1f5fb;
+  border-color: #9fb3d1;
+}

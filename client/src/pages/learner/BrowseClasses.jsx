@@ -1,3 +1,4 @@
+import API_URL from "../../api.js";
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +13,7 @@ function BrowseClasses() {
     const [learner, setLearner] = useState(null);
 
     const [classes, setClasses] = useState([]);
+    const learnerHeaders = () => { let token = ""; try { token = JSON.parse(localStorage.getItem("learner") || "null")?.token || ""; } catch {} return token ? { Authorization: `Bearer ${token}` } : {}; };
 
 
     // =========================================
@@ -42,44 +44,7 @@ function BrowseClasses() {
             setLearner(learnerData);
 
 
-            const programId =
-                learnerData.programId?._id ||
-                learnerData.programId;
-
-
-            const grade =
-                String(
-                    learnerData.grade
-                ).trim();
-
-
-            console.log(
-                "Learner program:",
-                programId
-            );
-
-            console.log(
-                "Learner grade:",
-                grade
-            );
-
-
-            if (!programId || !grade) {
-
-                console.log(
-                    "Learner program or grade is missing."
-                );
-
-                return;
-
-            }
-
-
-            fetchClasses(
-                programId,
-                grade
-            );
-
+            fetchClasses(learnerData._id || learnerData.id);
 
         } catch (error) {
 
@@ -97,17 +62,14 @@ function BrowseClasses() {
     // FETCH ALL CLASSES FOR LEARNER GRADE
     // =========================================
 
-    const fetchClasses = async (
-        programId,
-        grade
-    ) => {
+    const fetchClasses = async (learnerId) => {
 
         try {
 
             const response = await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/program/${programId}/${encodeURIComponent(grade)}`
-
+                `${API_URL}/api/classes/browse/learner/${learnerId}`,
+                { headers: learnerHeaders() }
             );
 
 
@@ -168,23 +130,21 @@ function BrowseClasses() {
 
             const response = await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/${classId}/join`,
+                `${API_URL}/api/classes/${classId}/join`,
 
                 {
 
                     method: "PUT",
 
                     headers: {
-
-                        "Content-Type":
-                            "application/json"
-
+                        "Content-Type": "application/json",
+                        ...learnerHeaders()
                     },
 
                     body: JSON.stringify({
 
                         learnerId:
-                            learner._id
+                            learner._id || learner.id
 
                     })
 
@@ -199,26 +159,8 @@ function BrowseClasses() {
 
             if (response.ok) {
 
-                alert(
-                    "Joined class successfully 🚀"
-                );
-
-
-                const programId =
-                    learner.programId?._id ||
-                    learner.programId;
-
-
-                const grade =
-                    String(
-                        learner.grade
-                    ).trim();
-
-
-                fetchClasses(
-                    programId,
-                    grade
-                );
+                alert("Joined class successfully 🚀 Your class is now in My Classes.");
+                navigate("/learner/classes");
 
 
             } else {
@@ -259,8 +201,8 @@ function BrowseClasses() {
 
             item =>
 
-                String(item._id) ===
-                String(learner._id)
+                String(item?._id || item) ===
+                String(learner?._id || learner?.id)
 
         );
 

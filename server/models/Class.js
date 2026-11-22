@@ -19,7 +19,8 @@ const classSchema = new mongoose.Schema({
 
         ref: "Program",
 
-        required:true
+        required:false,
+        default:null
 
     },
 

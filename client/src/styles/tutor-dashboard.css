@@ -1,0 +1,24 @@
+.th-tutor-dashboard{max-width:1240px;margin:0 auto;padding:38px 34px 54px;color:#172b4d;min-height:100vh;box-sizing:border-box}
+.th-tutor-welcome{display:flex;justify-content:space-between;align-items:center;gap:22px;flex-wrap:wrap;padding:28px 30px;border:1px solid #dce6f2;border-radius:18px;background:linear-gradient(135deg,#fff 0%,#f1f6fc 100%);box-shadow:0 10px 28px rgba(16,45,89,.06)}
+.th-tutor-eyebrow{display:block;margin-bottom:8px;color:#52739e;font-size:10px;font-weight:850;letter-spacing:1.6px}
+.th-tutor-welcome h1{margin:0;color:#102d59;font-size:clamp(25px,3vw,34px);letter-spacing:-.7px}
+.th-tutor-welcome p{margin:9px 0 0;color:#687b95;font-size:14px}
+.th-tutor-primary,.th-tutor-empty-state button{border:0;border-radius:10px;background:#102d59;color:#fff;padding:12px 18px;font-weight:750;font-size:13px;box-shadow:0 5px 13px rgba(16,45,89,.15);cursor:pointer}
+.th-tutor-primary:hover,.th-tutor-empty-state button:hover{background:#1d477c}
+.th-tutor-section-title{margin:28px 0 12px;color:#102d59;font-size:19px}
+.th-tutor-dashboard hr{border:0;border-top:1px solid #e2eaf3;margin:20px 0 26px!important}
+.th-tutor-classes-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 15px}
+.th-tutor-classes-heading h2{margin:0;color:#102d59;font-size:22px}
+.th-tutor-classes-heading p{margin:7px 0 0;color:#718198;font-size:13px;line-height:1.6}
+.th-tutor-class-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:18px!important;margin:0 0 32px!important}
+.th-tutor-class-card{min-width:0!important;padding:21px!important;border:1px solid #dce6f1!important;border-radius:15px!important;background:#fff!important;box-shadow:0 6px 20px rgba(16,45,89,.055);cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.th-tutor-class-card:hover{transform:translateY(-3px);border-color:#9db5d2!important;box-shadow:0 12px 25px rgba(16,45,89,.10)}
+.th-tutor-class-card h3{margin:0 0 13px;color:#102d59;font-size:17px}
+.th-tutor-class-card p{color:#64748b;font-size:13px;line-height:1.6}
+.th-tutor-class-card button{border:0!important;border-radius:8px!important;padding:9px 12px!important;background:#102d59!important;color:white!important;font-weight:700!important;font-size:12px!important}
+.th-tutor-class-card button:last-child{background:#fff1f2!important;color:#b42332!important;border:1px solid #f4cbd0!important}
+.th-tutor-empty-state{grid-column:1/-1;padding:35px!important;border:1px dashed #b9c9dc!important;border-radius:15px!important;background:#fff!important;text-align:center}
+.th-tutor-empty-state h3{color:#102d59}.th-tutor-empty-state p{color:#718198;font-size:13px}
+.th-tutor-dashboard>button:last-child{border:1px solid #d8e2ed;border-radius:9px;background:#fff;color:#52657e;padding:9px 14px;font-weight:700;cursor:pointer}
+@media(max-width:900px){.th-tutor-dashboard{padding:76px 18px 35px}}
+@media(max-width:560px){.th-tutor-dashboard{padding:72px 13px 28px}.th-tutor-welcome{padding:22px 18px}.th-tutor-primary{width:100%}.th-tutor-class-grid{grid-template-columns:1fr}}

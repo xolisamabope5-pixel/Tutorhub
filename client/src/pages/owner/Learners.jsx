@@ -1,3 +1,4 @@
+import API_URL from "../../api.js";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -33,7 +34,7 @@ function Learners(){
 
             const response = await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/programs/owner/${ownerId}`
+                `${API_URL}/api/programs/owner/${ownerId}`
 
             );
 

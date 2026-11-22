@@ -6,11 +6,21 @@ const programSchema = new mongoose.Schema({
     // TUITION CENTRE NAME
     // =========================================
 
-    name: {
-        type: String,
-        required: true,
-        unique: true
-    },
+    name: { type: String, required: true, trim: true },
+
+    providerType: { type: String, enum: ["tuition-centre", "private-tutor"], default: "tuition-centre", index: true },
+
+    expectedLearners: { type: Number, default: 0, min: 0 },
+    platformFee: { type: Number, default: 0, min: 0 },
+    customQuoteRequired: { type: Boolean, default: false },
+
+    subjectsOffered: { type: [String], default: [] },
+
+    gradesOffered: { type: [String], default: [] },
+
+    tuitionOptions: { type: [String], default: ["Online", "In person"] },
+
+    logo: { type: String, default: "" },
 
 
     // =========================================
@@ -93,6 +103,7 @@ const programSchema = new mongoose.Schema({
         enum: [
             "Pending",
             "Active",
+            "Rejected",
             "Blocked"
         ],
         default: "Pending"

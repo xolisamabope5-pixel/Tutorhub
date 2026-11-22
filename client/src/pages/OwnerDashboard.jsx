@@ -1,3 +1,4 @@
+import API_URL from "../api.js";
 import {
     useEffect,
     useState
@@ -23,6 +24,7 @@ function OwnerDashboard() {
 
     const [dashboard, setDashboard] =
         useState(null);
+    const [centreTutorApplications, setCentreTutorApplications] = useState([]);
 
 
     // =========================================
@@ -97,6 +99,7 @@ function OwnerDashboard() {
         setOwner(
             ownerData
         );
+        fetchCentreTutorApplications(ownerData);
 
 
         fetchDashboard(
@@ -112,6 +115,25 @@ function OwnerDashboard() {
     }, [navigate]);
 
 
+    const fetchCentreTutorApplications = async (ownerData) => {
+        if (!ownerData?.token) return;
+        try {
+            const response = await fetch(`${API_URL}/api/tutors/centre-applications`, { headers: { Authorization: `Bearer ${ownerData.token}` } });
+            if (response.ok) setCentreTutorApplications(await response.json());
+        } catch (error) { console.error("Could not load centre tutor applications", error); }
+    };
+
+    const reviewCentreTutor = async (tutorId, action) => {
+        if (!owner?.token || !window.confirm(`Are you sure you want to ${action} this tutor application?`)) return;
+        try {
+            const response = await fetch(`${API_URL}/api/tutors/centre-applications/${tutorId}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${owner.token}` }, body: JSON.stringify({ action }) });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Could not update application");
+            await fetchCentreTutorApplications(owner);
+            alert(data.message || "Tutor application updated.");
+        } catch (error) { alert(error.message); }
+    };
+
     // =========================================
     // FETCH OWNER DASHBOARD
     // =========================================
@@ -121,9 +143,11 @@ function OwnerDashboard() {
 
             try {
 
+                const storedTutor = JSON.parse(localStorage.getItem("tutor") || "{}");
                 const response =
                     await fetch(
-                        `https://tutorhub-api-bz1y.onrender.com/api/programs/owner/${ownerId}`
+                        `${API_URL}/api/provider-workspace/dashboard`,
+                        { headers: { Authorization: `Bearer ${storedTutor.token || ""}` } }
                     );
 
 
@@ -169,7 +193,7 @@ function OwnerDashboard() {
 
                 const response =
                     await fetch(
-                        `https://tutorhub-api-bz1y.onrender.com/api/platform-settings/owner/${ownerId}`
+                        `${API_URL}/api/platform-settings/owner/${ownerId}`
                     );
 
 
@@ -220,13 +244,7 @@ function OwnerDashboard() {
             }
 
 
-            window.open(
-
-                `https://tutorhub-api-bz1y.onrender.com/uploads/${file}`,
-
-                "_blank"
-
-            );
+            window.dispatchEvent(new CustomEvent("tutorhub:open-resource", { detail: { url: `${API_URL}/uploads/${file}` } }));
 
         };
 
@@ -268,7 +286,7 @@ function OwnerDashboard() {
 
                 const response =
                     await fetch(
-                        `https://tutorhub-api-bz1y.onrender.com/api/platform-settings/owner/${owner.id}/payment-proof`,
+                        `${API_URL}/api/platform-settings/owner/${owner.id}/payment-proof`,
                         {
 
                             method:
@@ -360,16 +378,18 @@ function OwnerDashboard() {
 
             try {
 
+                const storedTutor = JSON.parse(localStorage.getItem("tutor") || "{}");
                 const response =
                     await fetch(
-
-                        `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/approve`,
-
+                        `${API_URL}/api/provider-workspace/learners/${id}/status`,
                         {
-                            method:
-                                "PUT"
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${storedTutor.token || ""}`
+                            },
+                            body: JSON.stringify({ status: "Approved" })
                         }
-
                     );
 
 
@@ -409,6 +429,35 @@ function OwnerDashboard() {
 
 
     // =========================================
+    // REJECT LEARNER APPLICATION
+    // =========================================
+    const rejectLearner = async (id) => {
+        if (!window.confirm("Reject this learner application?")) return;
+        try {
+            const storedTutor = JSON.parse(localStorage.getItem("tutor") || "{}");
+            const response = await fetch(
+                `${API_URL}/api/provider-workspace/learners/${id}/status`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${storedTutor.token || ""}`
+                    },
+                    body: JSON.stringify({ status: "Rejected" })
+                }
+            );
+            const data = await response.json();
+            if (!response.ok) return alert(data.message || "Could not reject application");
+            alert("Application rejected");
+            fetchDashboard(owner.id);
+        } catch (error) {
+            console.error(error);
+            alert("Could not reject application");
+        }
+    };
+
+
+    // =========================================
     // BLOCK LEARNER
     // =========================================
 
@@ -419,7 +468,7 @@ function OwnerDashboard() {
 
                 await fetch(
 
-                    `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/block`,
+                    `${API_URL}/api/learners/${id}/block`,
 
                     {
                         method:
@@ -461,7 +510,7 @@ function OwnerDashboard() {
 
                 await fetch(
 
-                    `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/unblock`,
+                    `${API_URL}/api/learners/${id}/unblock`,
 
                     {
                         method:
@@ -1084,6 +1133,13 @@ function OwnerDashboard() {
             }
 
 
+            {/* CENTRE TUTOR APPLICATIONS */}
+            {dashboard.providerType === "tuition-centre" && <section style={{ margin: "28px 0", padding: 20, background: "#f7f9fd", border: "1px solid #e1e7f0", borderRadius: 14 }}>
+                <h2 style={{ marginTop: 0 }}>Tutor applications</h2>
+                <p>Review tutors who want to join your tuition centre. Approved tutors can then sign in to their limited teaching workspace.</p>
+                {centreTutorApplications.filter((item) => item.status === "Pending").length === 0 ? <p>No pending tutor applications.</p> : centreTutorApplications.filter((item) => item.status === "Pending").map((item) => <div key={item._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "12px 0", borderTop: "1px solid #e1e7f0" }}><div><b>{item.name} {item.surname}</b><div>{item.email}</div></div><div style={{ display: "flex", gap: 8 }}><button onClick={() => reviewCentreTutor(item._id, "approve")}>Approve</button><button onClick={() => reviewCentreTutor(item._id, "reject")}>Reject</button></div></div>)}
+            </section>}
+
             {/* =====================================
                 LEARNERS
             ===================================== */}
@@ -1149,7 +1205,7 @@ function OwnerDashboard() {
                                 {
                                     learner.status ===
                                     "Pending" && (
-
+                                        <>
                                         <button
                                             onClick={() =>
                                                 approveLearner(
@@ -1159,7 +1215,13 @@ function OwnerDashboard() {
                                         >
                                             Approve Learner ✅
                                         </button>
-
+                                        <button
+                                            type="button"
+                                            onClick={() => rejectLearner(learner._id)}
+                                        >
+                                            Reject Application
+                                        </button>
+                                        </>
                                     )
                                 }
 

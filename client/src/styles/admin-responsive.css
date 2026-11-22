@@ -206,3 +206,22 @@
     }
 
 }
+/* Platform owner overview cards */
+.th-overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:24px 0 28px}.th-overview-card{display:flex;align-items:center;gap:14px;padding:18px 20px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 5px 18px #0f172a08}.th-overview-card>span{width:42px;height:42px;border-radius:12px;background:#eef2ff;color:#4338ca;display:grid;place-items:center;font-size:21px}.th-overview-card small,.th-overview-card strong{display:block}.th-overview-card small{font-size:12px;color:#64748b;margin-bottom:5px}.th-overview-card strong{font-size:24px;color:#111827}@media(max-width:800px){.th-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:480px){.th-overview-grid{grid-template-columns:1fr}}
+.th-private-tutors-panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:22px;margin:0 0 26px;box-shadow:0 5px 18px #0f172a08}.th-panel-heading{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:18px}.th-panel-heading p{font-size:10px;letter-spacing:1.5px;color:#6366f1;font-weight:800;margin:0 0 5px}.th-panel-heading h2{margin:0;color:#111827;font-size:20px}.th-panel-heading span{display:block;color:#64748b;font-size:12px;margin-top:5px}.th-panel-heading>strong{background:#eef2ff;color:#4338ca;border-radius:20px;padding:8px 12px;font-size:12px}.th-panel-empty{padding:22px;text-align:center;color:#64748b;background:#f8fafc;border-radius:10px}.th-private-tutor-list{display:grid;gap:10px}.th-private-tutor-row{display:flex;align-items:center;gap:13px;padding:13px;border:1px solid #e5e7eb;border-radius:12px;flex-wrap:wrap}.th-private-tutor-avatar{width:40px;height:40px;border-radius:50%;background:#e0e7ff;color:#3730a3;display:grid;place-items:center;font-weight:800}.th-private-tutor-info{flex:1;min-width:180px}.th-private-tutor-info strong,.th-private-tutor-info span,.th-private-tutor-info small{display:block}.th-private-tutor-info strong{font-size:14px;color:#111827}.th-private-tutor-info span{font-size:12px;color:#475569;margin:3px 0}.th-private-tutor-info small{font-size:11px;color:#64748b}.th-status-pill{font-size:10px;font-weight:800;border-radius:20px;padding:6px 9px;background:#fef3c7;color:#92400e}.th-status-approved{background:#dcfce7;color:#166534}.th-status-blocked{background:#fee2e2;color:#991b1b}.th-private-tutor-actions{display:flex;gap:6px}.th-private-tutor-actions button{border:0;border-radius:7px;padding:7px 9px;background:#e0e7ff;color:#3730a3;font-size:11px;font-weight:700;cursor:pointer}.th-private-tutor-actions button.danger{background:#fee2e2;color:#991b1b}@media(max-width:700px){.th-private-tutor-row{align-items:flex-start}.th-private-tutor-actions{width:100%;padding-left:53px}.th-private-tutor-actions button{flex:1}}
+
+/* Super Admin workspace tabs: each selection shows one workspace only. */
+.th-admin-tabs{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 24px;padding:8px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:16px}
+.th-admin-tabs button{border:0;background:transparent;color:#475569;padding:11px 17px;border-radius:11px;font-weight:750;cursor:pointer;transition:all .18s ease}
+.th-admin-tabs button:hover{background:#e2e8f0;color:#0f172a}
+.th-admin-tabs button.active{background:#111827;color:#fff;box-shadow:0 5px 14px rgba(15,23,42,.16)}
+.th-overview-grid{scroll-margin-top:20px}
+.th-overview-card{min-height:104px}
+.admin-page[data-admin-view="overview"] .admin-container>:not(.admin-header):not(.th-admin-tabs):not(#overview){display:none!important}
+.admin-page[data-admin-view="applications"] .admin-container>:not(.admin-header):not(.th-admin-tabs):not(#provider-applications){display:none!important}
+.admin-page[data-admin-view="centres"] .admin-container>:not(.admin-header):not(.th-admin-tabs):not(#centres){display:none!important}
+.admin-page[data-admin-view="tutors"] .admin-container>:not(.admin-header):not(.th-admin-tabs):not(#tutors){display:none!important}
+.admin-page[data-admin-view="payments"] .admin-container>:not(.admin-header):not(.th-admin-tabs):not(#payments){display:none!important}
+@media(max-width:640px){.th-admin-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.th-admin-tabs button{padding:10px 8px;font-size:12px}}
+
+.admin-page[data-admin-view] .admin-container>.th-admin-modal-shell{display:block!important}

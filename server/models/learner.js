@@ -35,36 +35,25 @@ const learnerSchema = new mongoose.Schema({
 
 
 
-    school: {
-
-        type: String,
-
-        required: true
-
-    },
+    // Retained for existing accounts; optional for new registrations.
+    school: { type: String, default: "" },
 
 
 
-    subjects: {
+    // Subjects are selected from the provider's available options later.
+    subjects: { type: String, default: "" },
 
-        type: String,
+    email: { type: String, lowercase: true, trim: true, sparse: true },
 
-        required: true
+    providerType: { type: String, enum: ["tuition-centre", "private-tutor"], default: "tuition-centre" },
 
-    },
+    tuitionOption: { type: String, default: "" },
 
 
 
 
-    username: {
-
-        type: String,
-
-        required: true,
-
-        unique: true
-
-    },
+    // Username remains for backward compatibility with existing accounts.
+    username: { type: String, default: undefined, sparse: true },
 
 
 
@@ -81,13 +70,7 @@ const learnerSchema = new mongoose.Schema({
 
     // Payment proof uploaded during registration
 
-    paymentProof: {
-
-        type: String,
-
-        required: true
-
-    },
+    paymentProof: { type: String, default: "" },
 
 
 
@@ -101,7 +84,9 @@ const learnerSchema = new mongoose.Schema({
 
         ref: "Program",
 
-        required: true
+        required: false,
+
+        default: null
 
     },
 
@@ -117,7 +102,9 @@ const learnerSchema = new mongoose.Schema({
 
         ref: "Tutor",
 
-        required: true
+        required: false,
+
+        default: null
 
     },
 
@@ -208,6 +195,9 @@ const learnerSchema = new mongoose.Schema({
 
 
 
+
+// New email-based accounts are unique; legacy accounts without email remain valid.
+learnerSchema.index({ email: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model(
 

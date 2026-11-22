@@ -1,0 +1,24 @@
+/* Learner assignment journey — aligned with TutorHub's navy/white classroom system. */
+.th-learner-assignments,.th-learner-assignment-detail{--th-navy:#102a56;--th-blue:#17427b;--th-ink:#172b4d;--th-muted:#64748b;--th-line:#e2eaf4;--th-soft:#f5f8fc;color:var(--th-ink);max-width:1180px;margin:0 auto;padding:clamp(16px,3vw,30px);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.th-learner-assignments h1,.th-learner-assignment-detail h1{font-size:clamp(25px,3vw,34px);font-weight:800;letter-spacing:-.7px;color:var(--th-navy);margin:0 0 18px}
+.th-learner-assignments h2,.th-learner-assignment-detail h2{color:var(--th-navy);font-weight:800;margin:22px 0 14px}
+.th-learner-assignments h3,.th-learner-assignment-detail h3{color:#193b6b}
+.th-learner-assignments p,.th-learner-assignment-detail p{color:#53647b;line-height:1.65}
+.th-learner-assignments>div>div[style*="grid"]{align-items:stretch}
+.th-learner-assignments>div>div[style*="grid"]>div,.th-document-assignment-card{border:1px solid var(--th-line)!important;border-radius:16px!important;padding:20px!important;background:#fff!important;box-shadow:0 8px 22px rgba(16,42,86,.06);transition:transform .18s ease,box-shadow .18s ease}
+.th-learner-assignments>div>div[style*="grid"]>div:hover,.th-document-assignment-card:hover{transform:translateY(-2px);box-shadow:0 13px 28px rgba(16,42,86,.10)}
+.th-learner-assignments button,.th-learner-assignment-detail button{border:0;border-radius:10px;background:var(--th-navy);color:#fff;padding:11px 16px;font-weight:750;cursor:pointer;transition:background .18s ease,transform .18s ease}
+.th-learner-assignments button:hover,.th-learner-assignment-detail button:hover{background:#1b477f;transform:translateY(-1px)}
+.th-learner-assignments button:disabled,.th-learner-assignment-detail button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.th-learner-assignment-detail{background:#fff;border:1px solid var(--th-line);border-radius:18px;box-shadow:0 12px 30px rgba(16,42,86,.06);margin:20px auto}
+.th-learner-assignment-detail hr{border:0;border-top:1px solid var(--th-line);margin:24px 0}
+.th-assignment-back{background:#edf3fb!important;color:var(--th-navy)!important;margin-bottom:16px}
+.th-assignment-resource{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 18px;margin:18px 0;border:1px solid #dbe6f4;border-radius:14px;background:linear-gradient(135deg,#f8fbff,#eef4fc)}
+.th-assignment-resource>div{display:flex;align-items:center;gap:12px;min-width:0}.th-assignment-resource>div>div{display:grid;gap:4px}.th-assignment-resource strong{color:var(--th-navy)}.th-assignment-resource small{color:var(--th-muted);line-height:1.4}.th-assignment-file-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:11px;background:#dce9fa;color:var(--th-navy);font-size:23px;font-weight:800}
+.th-assignment-resource a,.th-document-assignment-actions a{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:9px;background:var(--th-navy);color:#fff;text-decoration:none;font-size:13px;font-weight:750;white-space:nowrap}
+.th-document-assignment-card{margin:12px 0}.th-document-assignment-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.th-document-assignment-actions a{background:#eaf1fb;color:var(--th-navy)}
+.th-learner-assignment-detail textarea,.th-learner-assignment-detail input[type="text"],.th-learner-assignment-detail input[type="file"]{box-sizing:border-box;max-width:100%;width:100%;border:1px solid #cfdaea;border-radius:10px;padding:12px;background:#fff;color:var(--th-ink);font:inherit}
+.th-learner-assignment-detail textarea{min-height:120px;resize:vertical;line-height:1.55}
+.th-learner-assignment-detail [style*="border: 1px solid #ddd"],.th-learner-assignment-detail [style*="border:1px solid #ddd"]{border-color:var(--th-line)!important;border-radius:13px!important;background:#fbfdff;padding:18px!important}
+.th-learner-assignment-detail [style*="border: 2px solid #333"],.th-learner-assignment-detail [style*="border:2px solid green"]{border:1px solid #b8d9c8!important;border-radius:14px!important;background:#f0faf5;padding:20px!important}
+@media(max-width:640px){.th-learner-assignments,.th-learner-assignment-detail{padding:14px}.th-learner-assignment-detail{margin:10px}.th-assignment-resource{align-items:stretch;flex-direction:column}.th-assignment-resource a,.th-document-assignment-actions a,.th-document-assignment-actions button{width:100%;box-sizing:border-box}.th-document-assignment-actions{flex-direction:column}.th-learner-assignment-detail button{max-width:100%}}

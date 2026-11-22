@@ -1,3 +1,4 @@
+import API_URL from "../../api.js";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -21,7 +22,7 @@ function ManageLearner(){
 
             const response = await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}`
+                `${API_URL}/api/learners/${id}`
 
             );
 
@@ -41,7 +42,7 @@ function ManageLearner(){
 
         await fetch(
 
-            `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/approve`,
+            `${API_URL}/api/learners/${id}/approve`,
 
             {
 
@@ -61,7 +62,7 @@ function ManageLearner(){
 
         await fetch(
 
-            `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/block`,
+            `${API_URL}/api/learners/${id}/block`,
 
             {
 
@@ -81,7 +82,7 @@ function ManageLearner(){
 
         await fetch(
 
-            `https://tutorhub-api-bz1y.onrender.com/api/learners/${id}/unblock`,
+            `${API_URL}/api/learners/${id}/unblock`,
 
             {
 
@@ -157,13 +158,7 @@ function ManageLearner(){
 
                 <button
 
-                    onClick={()=>window.open(
-
-                        `https://tutorhub-api-bz1y.onrender.com/uploads/${learner.paymentProof}`,
-
-                        "_blank"
-
-                    )}
+                    onClick={()=>window.dispatchEvent(new CustomEvent("tutorhub:open-resource", { detail: { url: `${API_URL}/uploads/${learner.paymentProof}` } }))}
 
                 >
 

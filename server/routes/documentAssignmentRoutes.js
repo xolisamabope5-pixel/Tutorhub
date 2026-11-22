@@ -6,6 +6,19 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const { v2: cloudinary } = require("cloudinary");
 
 const DocumentAssignment = require("../models/DocumentAssignment");
+const Class = require("../models/Class");
+const { authenticate } = require("../middleware/authMiddleware");
+
+const isTutor = (user) => ["teacher", "owner", "admin"].includes(user?.role);
+async function canAccessClass(user, classId) {
+    const cls = await Class.findById(classId);
+    if (!cls) return { cls: null, allowed: false };
+    const allowed = user.role === "admin" ||
+        (isTutor(user) && String(cls.tutorId) === String(user.id)) ||
+        (user.role === "learner" && (cls.learners || []).some(id => String(id) === String(user.id)));
+    return { cls, allowed };
+}
+
 
 
 // =============================================
@@ -57,6 +70,8 @@ const upload = multer({
 
 router.post(
     "/create",
+    authenticate,
+    (req, res, next) => isTutor(req.user) ? next() : res.status(403).json({ message: "Tutor access required." }),
     (req, res, next) => {
         upload.single("document")(req, res, (error) => {
             if (error) {
@@ -75,7 +90,6 @@ router.post(
 
             const {
                 classId,
-                tutorId,
                 title,
                 description,
                 totalMarks,
@@ -89,7 +103,6 @@ router.post(
 
             if (
                 !classId ||
-                !tutorId ||
                 !title ||
                 !totalMarks ||
                 !dueDate
@@ -98,12 +111,17 @@ router.post(
                 return res.status(400).json({
 
                     message:
-                        "Class, tutor, title, total marks and due date are required."
+                        "Class, title, total marks and due date are required."
 
                 });
 
             }
 
+
+            if (!isTutor(req.user)) return res.status(403).json({ message: "Tutor access required." });
+            const { cls, allowed } = await canAccessClass(req.user, classId);
+            if (!cls) return res.status(404).json({ message: "Classroom not found." });
+            if (!allowed) return res.status(403).json({ message: "You do not own this classroom." });
 
             if (!req.file) {
 
@@ -126,7 +144,7 @@ router.post(
 
                     classId,
 
-                    tutorId,
+                    tutorId: req.user.id,
 
                     title,
 
@@ -280,9 +298,14 @@ router.get(
 
 router.get(
     "/class/:id",
+    authenticate,
     async (req, res) => {
 
         try {
+
+            const { cls, allowed } = await canAccessClass(req.user, req.params.id);
+            if (!cls) return res.status(404).json({ message: "Classroom not found." });
+            if (!allowed) return res.status(403).json({ message: "You are not enrolled in or assigned to this classroom." });
 
             const assignments =
                 await DocumentAssignment.find({
@@ -327,6 +350,7 @@ router.get(
 
 router.get(
     "/:id",
+    authenticate,
     async (req, res) => {
 
         try {
@@ -337,18 +361,9 @@ router.get(
                 );
 
 
-            if (!assignment) {
-
-                return res.status(404).json({
-
-                    message:
-                        "Document assignment not found."
-
-                });
-
-            }
-
-
+            if (!assignment) return res.status(404).json({ message: "Document assignment not found." });
+            const { allowed } = await canAccessClass(req.user, assignment.classId);
+            if (!allowed) return res.status(403).json({ message: "You cannot access this assignment." });
             res.json(assignment);
 
 
@@ -379,6 +394,7 @@ router.get(
 
 router.delete(
     "/:id",
+    authenticate,
     async (req, res) => {
 
         try {
@@ -400,6 +416,10 @@ router.delete(
 
             }
 
+
+            if (!isTutor(req.user)) return res.status(403).json({ message: "Tutor access required." });
+            if (req.user.role !== "admin" && String(assignment.tutorId) !== String(req.user.id))
+                return res.status(403).json({ message: "You do not own this assignment." });
 
             await DocumentAssignment.findByIdAndDelete(
                 req.params.id

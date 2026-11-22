@@ -40,25 +40,20 @@ router.post("/login", async (req, res) => {
 
     try {
 
-        const {
-            username,
-            password
-        } = req.body;
+        const { username, email, password } = req.body;
+        const loginIdentifier = String(email || username || "").trim().toLowerCase();
 
 
         // =============================================
         // VALIDATION
         // =============================================
 
-        if (
-            !username ||
-            !password
-        ) {
+        if (!loginIdentifier || !password) {
 
             return res.status(400).json({
 
                 message:
-                    "Username and password are required."
+                    "Email and password are required."
 
             });
 
@@ -70,12 +65,7 @@ router.post("/login", async (req, res) => {
         // =============================================
 
         const admin =
-            await Admin.findOne({
-
-                username:
-                    username.trim()
-
-            });
+            await Admin.findOne({ username: loginIdentifier });
 
 
         if (!admin) {
@@ -83,7 +73,7 @@ router.post("/login", async (req, res) => {
             return res.status(401).json({
 
                 message:
-                    "Invalid username or password."
+                    "Invalid email or password."
 
             });
 
@@ -109,7 +99,7 @@ router.post("/login", async (req, res) => {
             return res.status(401).json({
 
                 message:
-                    "Invalid username or password."
+                    "Invalid email or password."
 
             });
 

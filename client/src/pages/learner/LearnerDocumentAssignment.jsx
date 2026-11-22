@@ -1,8 +1,14 @@
+import API_URL from "../../api.js";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import BackButton from "../../components/BackButton";
 
-const API = "https://tutorhub-api-bz1y.onrender.com";
+const API = `${API_URL}`;
+const learnerAuthHeaders = (json = false) => {
+    let token = "";
+    try { token = JSON.parse(localStorage.getItem("learner") || "null")?.token || ""; } catch { /* no session */ }
+    return { ...(json ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+};
 
 function LearnerDocumentAssignment() {
 
@@ -44,7 +50,8 @@ function LearnerDocumentAssignment() {
 
             const assignmentResponse =
                 await fetch(
-                    `${API}/api/document-assignments/${id}`
+                    `${API}/api/document-assignments/${id}`,
+                    { headers: learnerAuthHeaders() }
                 );
 
             if (!assignmentResponse.ok) {
@@ -65,7 +72,8 @@ function LearnerDocumentAssignment() {
 
             const submissionResponse =
                 await fetch(
-                    `${API}/api/document-submissions/learner/${learnerData._id}/${id}`
+                    `${API}/api/document-submissions/learner/${learnerData._id}/${id}`,
+                    { headers: learnerAuthHeaders() }
                 );
 
             if (submissionResponse.ok) {
@@ -188,6 +196,7 @@ function LearnerDocumentAssignment() {
                     `${API}/api/document-submissions/create`,
                     {
                         method: "POST",
+                        headers: learnerAuthHeaders(),
                         body: formData
                     }
                 );
@@ -475,11 +484,7 @@ function LearnerDocumentAssignment() {
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    window.open(
-                                                        file.url,
-                                                        "_blank",
-                                                        "noopener,noreferrer"
-                                                    )
+                                                    window.dispatchEvent(new CustomEvent("tutorhub:open-resource", { detail: { url: file.url } }))
                                                 }
                                             >
                                                 {file.name ||
@@ -540,11 +545,7 @@ function LearnerDocumentAssignment() {
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            window.open(
-                                                submission.markedDocument,
-                                                "_blank",
-                                                "noopener,noreferrer"
-                                            )
+                                            window.dispatchEvent(new CustomEvent("tutorhub:open-resource", { detail: { url: submission.markedDocument } }))
                                         }
                                     >
                                         View Marked Document

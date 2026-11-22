@@ -1,3 +1,4 @@
+import API_URL from "../../api.js";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -22,7 +23,7 @@ function TeacherClasses(){
         try{
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/tutor/${id}`
+                `${API_URL}/api/classes/tutor/${id}`
             );
 
             const data = await response.json();

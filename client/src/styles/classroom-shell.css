@@ -1,0 +1,48 @@
+/* Shared TutorHub classroom shell for tutor, owner and learner views. */
+.th-classroom-layout{display:grid;grid-template-columns:245px minmax(0,1fr);gap:24px;align-items:start;max-width:1440px;margin:22px auto;padding:0 22px;color:#172554}
+.th-classroom-sidebar{position:sticky;top:18px;display:flex;flex-direction:column;gap:7px;min-height:calc(100vh - 36px);padding:18px 13px;background:#102a56;border-radius:18px;box-shadow:0 12px 30px rgba(15,35,75,.14)}
+.th-classroom-brand{font-size:20px;font-weight:800;color:#fff;padding:9px 12px 22px;letter-spacing:-.4px}.th-classroom-brand span{display:block;font-size:12px;font-weight:500;color:#b9c9e5;letter-spacing:.5px;margin-top:3px}
+.th-classroom-nav{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:0;border-radius:10px;background:transparent;color:#dce7f8;text-align:left;font-size:14px;font-weight:650;cursor:pointer;transition:.18s}.th-classroom-nav span{width:22px;font-size:17px}.th-classroom-nav:hover{background:rgba(255,255,255,.1);color:#fff}.th-classroom-nav.active{background:#fff;color:#123568;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.th-classroom-content{min-width:0;background:#fff;border:1px solid #e3eaf4;border-radius:18px;padding:26px;min-height:65vh;box-shadow:0 8px 26px rgba(15,35,75,.06)}
+.th-classroom-content h2,.th-classroom-content h3{color:#153568}.th-classroom-content button{cursor:pointer}
+@media(max-width:760px){.th-classroom-layout{grid-template-columns:1fr;padding:0 12px;gap:12px}.th-classroom-sidebar{position:static;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:12px}.th-classroom-brand{grid-column:1/-1;padding:5px 8px 10px}.th-classroom-nav{padding:11px 9px}.th-classroom-content{padding:16px}}
+.th-classroom-workspace-panel{background:#fff;border:1px solid #e3eaf4;border-radius:14px;padding:22px;min-height:220px}.th-classroom-workspace-panel h2{margin:0 0 8px;color:#153568}.th-classroom-workspace-panel>p{color:#64748b;line-height:1.55}.th-classroom-work-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 0;border-top:1px solid #e7edf5}.th-classroom-work-row>div{display:flex;flex-direction:column;gap:5px}.th-classroom-work-row strong{color:#183a68}.th-classroom-work-row small{color:#8190a4;font-size:12px}.th-classroom-work-row button,.th-classroom-workspace-panel>button{border:0;border-radius:9px;background:#153b70;color:#fff;padding:10px 14px;font-weight:700;cursor:pointer;white-space:nowrap}@media(max-width:620px){.th-classroom-work-row{align-items:flex-start;flex-direction:column}.th-classroom-work-row button{width:100%}}
+
+
+/* Classroom assignment reports */
+.th-classroom-reports-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.th-classroom-reports-heading h2{margin:0 0 6px;color:#142746}
+.th-classroom-reports-heading p{margin:0;color:#64748b;line-height:1.5}
+.th-classroom-reports-heading>button,.th-classroom-report-error button{border:0;border-radius:9px;background:#12396b;color:#fff;padding:10px 14px;font-weight:700;cursor:pointer}
+.th-classroom-reports-heading>button:disabled{opacity:.65;cursor:wait}
+.th-classroom-report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0 24px}
+.th-classroom-report-summary article{border:1px solid #e2e8f0;border-radius:12px;padding:15px;background:#f8fafc}
+.th-classroom-report-summary span{display:block;color:#64748b;font-size:13px}
+.th-classroom-report-summary strong{display:block;margin-top:7px;color:#142746;font-size:25px}
+.th-classroom-report-chart{border:1px solid #e2e8f0;border-radius:13px;padding:16px;background:#fff}
+.th-classroom-report-axis,.th-classroom-report-scale{display:flex;justify-content:space-between;gap:12px;color:#64748b;font-size:12px}
+.th-classroom-report-axis{font-weight:700;padding-bottom:9px}
+.th-classroom-report-row{padding:15px 0;border-top:1px solid #edf2f7}
+.th-classroom-report-row-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:9px}
+.th-classroom-report-row-top>div:first-child{min-width:0}
+.th-classroom-report-row-top strong{display:block;color:#172b4d;overflow-wrap:anywhere}
+.th-classroom-report-row-top small{display:block;margin-top:4px;color:#64748b;font-size:12px}
+.th-classroom-report-value{text-align:right;flex-shrink:0}
+.th-classroom-report-value strong{font-size:18px}
+.th-classroom-report-track{height:13px;background:#e8eef5;border-radius:20px;overflow:hidden}
+.th-classroom-report-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,#2563eb,#0f9f78);transition:width .25s ease}
+.th-classroom-report-scale{margin-top:8px}
+.th-classroom-report-empty{padding:32px 12px;text-align:center;color:#64748b}
+.th-classroom-report-empty h3{color:#334155;margin:0 0 6px}
+.th-classroom-report-error{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px;border-radius:10px;background:#fff1f2;color:#9f1239}
+@media(max-width:560px){.th-classroom-report-row-top{align-items:flex-start}.th-classroom-report-value strong{font-size:16px}.th-classroom-report-chart{padding:12px}}
+
+/* Consistent full-screen live lesson / recording experience across every role. */
+.th-live-overlay{position:fixed;inset:0;z-index:10000;display:flex;flex-direction:column;gap:0;padding:0;background:#f4f7fb;box-sizing:border-box;overflow:hidden}
+.th-live-modal-head{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:5px 4px 12px;color:#fff;border-bottom:1px solid #ffffff24}
+.th-live-modal-head>div{display:flex;flex-direction:column;gap:4px}.th-live-modal-head strong{font-size:17px;letter-spacing:.1px;color:#fff}
+.th-live-kicker{font-size:9px;font-weight:850;letter-spacing:1.7px;color:#9fb8d8}
+.th-live-close{border:1px solid #ffffff40;border-radius:9px;background:#ffffff12;color:#fff;padding:10px 15px;font-size:12px;font-weight:750;cursor:pointer}
+.th-live-close:hover{background:#ffffff25}
+.th-live-frame{width:100%;flex:1;min-height:0;border:1px solid #ffffff24;border-radius:13px;background:#050b16;box-shadow:0 12px 34px #0005}
+@media(max-width:600px){.th-live-overlay{padding:0;gap:0}.th-live-modal-head strong{font-size:15px}.th-live-close{padding:9px 11px}}

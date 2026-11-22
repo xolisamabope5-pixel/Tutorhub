@@ -1,3 +1,4 @@
+import API_URL from "../api.js";
 import {
     useEffect,
     useState
@@ -135,7 +136,7 @@ function OwnerPayments() {
                 const programResponse =
                     await fetch(
 
-                        `https://tutorhub-api-bz1y.onrender.com/api/programs/owner/${ownerId}`
+                        `${API_URL}/api/programs/owner/${ownerId}`
 
                     );
 
@@ -170,7 +171,7 @@ function OwnerPayments() {
                 const paymentsResponse =
                     await fetch(
 
-                        `https://tutorhub-api-bz1y.onrender.com/api/owner-payments/owner/${ownerId}`
+                        `${API_URL}/api/owner-payments/owner/${ownerId}`
 
                     );
 
@@ -346,7 +347,7 @@ function OwnerPayments() {
                 const response =
                     await fetch(
 
-                        "https://tutorhub-api-bz1y.onrender.com/api/owner-payments/create",
+                        `${API_URL}/api/owner-payments/create`,
 
                         {
 
@@ -467,13 +468,7 @@ function OwnerPayments() {
             }
 
 
-            window.open(
-
-                `https://tutorhub-api-bz1y.onrender.com/uploads/${file}`,
-
-                "_blank"
-
-            );
+            window.dispatchEvent(new CustomEvent("tutorhub:open-resource", { detail: { url: `${API_URL}/uploads/${file}` } }));
 
         };
 

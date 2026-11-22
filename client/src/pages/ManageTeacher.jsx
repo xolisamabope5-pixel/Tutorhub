@@ -1,3 +1,4 @@
+import API_URL from "../api.js";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
@@ -23,7 +24,7 @@ function ManageTeacher(){
         try{
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/tutors/${id}`
+                `${API_URL}/api/tutors/${id}`
             );
 
             const data = await response.json();
@@ -46,7 +47,7 @@ function ManageTeacher(){
 
             await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/tutors/${id}/reject`,
+                `${API_URL}/api/tutors/${id}/reject`,
 
                 {
                     method:"PUT"
@@ -76,7 +77,7 @@ function ManageTeacher(){
 
             await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/tutors/${id}/approve`,
+                `${API_URL}/api/tutors/${id}/approve`,
 
                 {
                     method:"PUT"

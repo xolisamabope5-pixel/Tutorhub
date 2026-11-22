@@ -1,88 +1,26 @@
-require("dotenv").config();
-
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-
-const Admin = require("./models/Admin");
-
+require('dotenv').config();
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const Admin = require('./models/Admin');
 
 async function createAdmin() {
-
-    try {
-
-        await mongoose.connect(
-            process.env.MONGO_URI
-        );
-
-        console.log(
-            "MongoDB connected."
-        );
-
-
-        const existingAdmin =
-            await Admin.findOne();
-
-
-        if (existingAdmin) {
-
-            console.log(
-                "Admin account already exists."
-            );
-
-            process.exit();
-
-        }
-
-
-        const passwordHash =
-            await bcrypt.hash(
-                "12345",
-                12
-            );
-
-
-        const admin =
-            new Admin({
-
-                username: "admin",
-
-                passwordHash
-
-            });
-
-
-        await admin.save();
-
-
-        console.log(
-            "Admin account created successfully 🚀"
-        );
-
-        console.log(
-            "Username: admin"
-        );
-
-        console.log(
-            "Password: 12345"
-        );
-
-
-        process.exit();
-
-
-    } catch (error) {
-
-        console.log(
-            "Could not create admin:"
-        );
-
-        console.log(error);
-
-        process.exit(1);
-
+  try {
+    if (!process.env.MONGO_URI || !process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+      throw new Error('Set MONGO_URI, ADMIN_EMAIL and ADMIN_PASSWORD in server/.env first.');
     }
-
+    if (process.env.ADMIN_PASSWORD.length < 12) throw new Error('ADMIN_PASSWORD must be at least 12 characters.');
+    await mongoose.connect(process.env.MONGO_URI);
+    const email = process.env.ADMIN_EMAIL.trim().toLowerCase();
+    const existing = await Admin.findOne({ username: email });
+    if (existing) throw new Error('An admin with this email already exists.');
+    const passwordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12);
+    await Admin.create({ username: email, passwordHash });
+    console.log(`Admin created: ${email}`);
+  } catch (error) {
+    console.error('Could not create admin:', error.message);
+    process.exitCode = 1;
+  } finally {
+    await mongoose.disconnect().catch(() => {});
+  }
 }
-
-
 createAdmin();

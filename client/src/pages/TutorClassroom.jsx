@@ -1,12 +1,32 @@
-﻿
+import "../styles/classroom-shell.css";
+import API_URL from "../api.js";
+import LiveLessonRoom from "../components/LiveLessonRoom.jsx";
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import BackButton from "../components/BackButton";
 
 function TutorClassroom() {
 
+    const tutorAuthHeaders = (json = false) => {
+        let token = "";
+        try { token = JSON.parse(localStorage.getItem("tutor") || "null")?.token || ""; } catch { /* no tutor session */ }
+        return { ...(json ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+    };
+
+    const [embeddedView, setEmbeddedView] = useState(null);
+
     const { id } = useParams();
     const navigate = useNavigate();
+    const tutorSession = (() => {
+        try { return JSON.parse(localStorage.getItem("tutor") || "null"); }
+        catch { return null; }
+    })();
+    const workspaceHomePath = tutorSession?.role === "owner" ? "/owner-dashboard" : "/tutor-dashboard";
+    const openAssignmentSubmissions = (item) => {
+        const isDocument = documentAssignments.some(doc => String(doc._id) === String(item._id));
+        navigate(`${isDocument ? "/tutor-document-submissions" : "/tutor-submissions"}/${item._id}`);
+    };
 
     // ==============================
     // CLASSROOM
@@ -116,6 +136,9 @@ function TutorClassroom() {
 
     const [documentAssignments, setDocumentAssignments] =
     useState([]);
+    const [classReports, setClassReports] = useState(null);
+    const [reportsLoading, setReportsLoading] = useState(false);
+    const [reportsError, setReportsError] = useState("");
     // ==============================
     // LOAD DATA
     // ==============================
@@ -128,6 +151,10 @@ function TutorClassroom() {
         fetchLessons();
 
     }, [id]);
+
+    useEffect(() => {
+        if (activeTab === "reports") fetchClassReports();
+    }, [activeTab, id]);
 
     // ==============================
     // LIVE CLOCK
@@ -176,7 +203,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/${id}`
+                `${API_URL}/api/classes/${id}`
             );
 
             const data = await response.json();
@@ -214,7 +241,7 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/assignments/class/${id}`
+                `${API_URL}/api/assignments/class/${id}`
             );
 
             const data = await response.json();
@@ -250,7 +277,8 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/document-assignments/class/${id}`
+                `${API_URL}/api/document-assignments/class/${id}`,
+                { headers: tutorAuthHeaders() }
             );
 
             const data = await response.json();
@@ -279,12 +307,30 @@ function TutorClassroom() {
     // FETCH LESSONS
     // ==============================
 
+    const fetchClassReports = async () => {
+        setReportsLoading(true);
+        setReportsError("");
+        try {
+            const response = await fetch(`${API_URL}/api/reports/class/${id}`, {
+                headers: tutorAuthHeaders()
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Could not load classroom reports.");
+            setClassReports(data);
+        } catch (error) {
+            setReportsError(error.message || "Could not load classroom reports.");
+        } finally {
+            setReportsLoading(false);
+        }
+    };
+
     const fetchLessons = async () => {
 
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/lessons/class/${id}`
+                `${API_URL}/api/lessons/class/${id}`,
+                { headers: tutorAuthHeaders() }
             );
 
             const data = await response.json();
@@ -315,6 +361,9 @@ function TutorClassroom() {
     // ==============================
 
     const getLessonStatus = (item) => {
+        if (item.status === "Live") return "live";
+        if (item.status === "Completed") return "completed";
+
 
         if (!item.date || !item.time) {
 
@@ -431,14 +480,11 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                "https://tutorhub-api-bz1y.onrender.com/api/lessons/create",
+                `${API_URL}/api/lessons/create`,
                 {
                     method: "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                    headers: tutorAuthHeaders(true),
 
                     body: JSON.stringify({
 
@@ -535,9 +581,10 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/lessons/${lessonId}`,
+                `${API_URL}/api/lessons/${lessonId}`,
                 {
-                    method: "DELETE"
+                    method: "DELETE",
+                    headers: tutorAuthHeaders()
                 }
             );
 
@@ -596,14 +643,11 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/lessons/${item._id}/recording`,
+                `${API_URL}/api/lessons/${item._id}/recording`,
                 {
                     method: "PUT",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                    headers: tutorAuthHeaders(true),
 
                     body: JSON.stringify({
 
@@ -650,26 +694,26 @@ function TutorClassroom() {
     };
 
     // ==============================
-    // JOIN / ENTER JITSI
+    // JOIN LIVEKIT CLASSROOM
     // ==============================
 
-    const joinLesson = (room) => {
-
-        if (!room) {
-
-            alert(
-                "Live lesson link is not available."
-            );
-
-            return;
-
+    const joinLesson = async (lessonItem) => {
+        if (!lessonItem?._id) { alert("Lesson details are missing."); return; }
+        try {
+            const response = await fetch(`${API_URL}/api/lessons/${lessonItem._id}/start-live`, {
+                method: "POST",
+                headers: tutorAuthHeaders(true),
+                body: JSON.stringify({})
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Could not start the live lesson.");
+            const startedLesson = data.lesson || { ...lessonItem, status: "Live" };
+            setLessons(current => current.map(item => String(item._id) === String(lessonItem._id) ? { ...item, ...startedLesson, status: "Live" } : item));
+            setEmbeddedView({ type: "meeting", lesson: { ...lessonItem, ...startedLesson, status: "Live" } });
+            setLessonView("live");
+        } catch (error) {
+            alert(error.message || "Could not start the live lesson.");
         }
-
-        window.open(
-            `https://meet.jit.si/${room}`,
-            "_blank"
-        );
-
     };
 
     // ==============================
@@ -677,22 +721,14 @@ function TutorClassroom() {
     // ==============================
 
     const watchRecording = (link) => {
-
         if (!link) {
-
-            alert(
-                "Recording is not available yet."
-            );
-
+            alert("Recording is not available yet.");
             return;
-
         }
-
-        window.open(
-            link,
-            "_blank"
-        );
-
+        let url = String(link).trim();
+        const youtube = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        if (youtube) url = `https://www.youtube-nocookie.com/embed/${youtube[1]}`;
+        setEmbeddedView({ type: "recording", url });
     };
 
     // ==============================
@@ -706,14 +742,11 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/${id}/announcement`,
+                `${API_URL}/api/classes/${id}/announcement`,
                 {
                     method: "PUT",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                    headers: tutorAuthHeaders(true),
 
                     body: JSON.stringify({
 
@@ -791,9 +824,10 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/${id}/announcement/${announcementId}`,
+                `${API_URL}/api/classes/${id}/announcement/${announcementId}`,
                 {
-                    method: "DELETE"
+                    method: "DELETE",
+                    headers: tutorAuthHeaders()
                 }
             );
 
@@ -901,14 +935,11 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                "https://tutorhub-api-bz1y.onrender.com/api/assignments/create",
+                `${API_URL}/api/assignments/create`,
                 {
                     method: "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                    headers: tutorAuthHeaders(true),
 
                     body: JSON.stringify({
 
@@ -1026,9 +1057,10 @@ function TutorClassroom() {
             formData.append("document", documentAssignment.document);
 
             const response = await fetch(
-                "https://tutorhub-api-bz1y.onrender.com/api/document-assignments/create",
+                `${API_URL}/api/document-assignments/create`,
                 {
                     method: "POST",
+                    headers: tutorAuthHeaders(),
                     body: formData
                 }
             );
@@ -1051,7 +1083,7 @@ function TutorClassroom() {
             } else {
                 alert(
                     data.message ||
-                    "Failed to create document assignment"
+                    "SERVER ERROR: " + (data.message || "Unknown error") + (data.error ? " | DETAIL: " + data.error : "")
                 );
             }
         } catch (error) {
@@ -1087,9 +1119,10 @@ function TutorClassroom() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/assignments/${assignmentId}`,
+                `${API_URL}/api/assignments/${assignmentId}`,
                 {
-                    method: "DELETE"
+                    method: "DELETE",
+                    headers: tutorAuthHeaders()
                 }
             );
 
@@ -1188,9 +1221,10 @@ function TutorClassroom() {
 
             const response =
                 await fetch(
-                    "https://tutorhub-api-bz1y.onrender.com/api/materials/upload",
+                    `${API_URL}/api/materials/upload`,
                     {
                         method: "POST",
+                        headers: tutorAuthHeaders(),
                         body: formData
                     }
                 );
@@ -1261,7 +1295,7 @@ function TutorClassroom() {
 
             const response =
                 await fetch(
-                    `https://tutorhub-api-bz1y.onrender.com/api/materials/${materialId}`,
+                    `${API_URL}/api/materials/${materialId}`,
                     {
                         method: "DELETE"
                     }
@@ -1357,9 +1391,7 @@ function TutorClassroom() {
 
                     <button
                         style={styles.backButton}
-                        onClick={() =>
-                            navigate(-1)
-                        }
+                        onClick={() => navigate(workspaceHomePath, { replace: true })}
                     >
                         ← Back
                     </button>
@@ -1396,78 +1428,94 @@ function TutorClassroom() {
 
                 </div>
 
-                {/* ================================= */}
-                {/* NAVIGATION */}
-                {/* ================================= */}
+                <div className="th-classroom-layout">
+                  <aside className="th-classroom-sidebar" aria-label="Classroom navigation">
+                    <div className="th-classroom-brand">TutorHub <span>Classroom</span></div>
+                    {[['stream','📢','Announcements'],['materials','📚','Materials'],['assignments','📝','Assignments'],['submissions','📥','Submissions'],['results','✓','Results'],['reports','▥','Reports'],['lessons','🎥','Lessons'],['people','👥','People']].map(([key,icon,label]) => (
+                      <button key={key} className={`th-classroom-nav ${activeTab===key?'active':''}`} onClick={()=>changeTab(key)}><span>{icon}</span>{label}</button>
+                    ))}
+                  </aside>
+                  <main className="th-classroom-content">
+                {activeTab === "submissions" && (
+                    <section className="th-classroom-workspace-panel">
+                        <h2>📥 Submissions</h2>
+                        <p>Choose an assignment to review learner work and mark submissions. Marks remain hidden from learners until you release them under Results.</p>
+                        {assignments.length === 0 && documentAssignments.length === 0 ? <p>No assignments have been created for this class yet.</p> : [...assignments, ...documentAssignments].map(item => (
+                            <article className="th-classroom-work-row" key={item._id}>
+                                <div><strong>{item.title}</strong><small>{item.dueDate ? `Due ${new Date(item.dueDate).toLocaleDateString()}` : "No due date"}</small></div>
+                                <button onClick={() => openAssignmentSubmissions(item)}>View submissions →</button>
+                            </article>
+                        ))}
+                    </section>
+                )}
 
-                <div style={styles.navigation}>
+                {activeTab === "results" && (
+                    <section className="th-classroom-workspace-panel">
+                        <h2>✓ Results</h2>
+                        <p>Review marking progress and decide when to release results. Re-marking automatically hides that learner's result until you release it again.</p>
+                        {assignments.length === 0 && documentAssignments.length === 0 ? <p>Results will appear here after learners submit assignments.</p> : [...assignments, ...documentAssignments].map(item => (
+                            <article className="th-classroom-work-row" key={item._id}>
+                                <div><strong>{item.title}</strong><small>Manage marks and learner visibility</small></div>
+                                <button onClick={() => openAssignmentSubmissions(item)}>Manage results →</button>
+                            </article>
+                        ))}
+                    </section>
+                )}
 
-                    <button
-                        style={
-                            activeTab === "stream"
-                                ? styles.activeTab
-                                : styles.tab
-                        }
-                        onClick={() =>
-                            changeTab("stream")
-                        }
-                    >
-                        📢 Stream
-                    </button>
-
-                    <button
-                        style={
-                            activeTab === "materials"
-                                ? styles.activeTab
-                                : styles.tab
-                        }
-                        onClick={() =>
-                            changeTab("materials")
-                        }
-                    >
-                        📚 Materials
-                    </button>
-
-                    <button
-                        style={
-                            activeTab === "assignments"
-                                ? styles.activeTab
-                                : styles.tab
-                        }
-                        onClick={() =>
-                            changeTab("assignments")
-                        }
-                    >
-                        📝 Assignments
-                    </button>
-
-                    <button
-                        style={
-                            activeTab === "lessons"
-                                ? styles.activeTab
-                                : styles.tab
-                        }
-                        onClick={() =>
-                            changeTab("lessons")
-                        }
-                    >
-                        🎥 Lessons
-                    </button>
-
-                    <button
-                        style={
-                            activeTab === "people"
-                                ? styles.activeTab
-                                : styles.tab
-                        }
-                        onClick={() =>
-                            changeTab("people")
-                        }
-                    >
-                        👥 People
-                    </button>
-
-                </div>
+                {activeTab === "reports" && (
+                    <section className="th-classroom-workspace-panel th-classroom-reports">
+                        <div className="th-classroom-reports-heading">
+                            <div>
+                                <h2>▥ Class Reports &amp; Analytics</h2>
+                                <p>Average learner performance for each assignment, calculated from marked submissions only.</p>
+                            </div>
+                            <button type="button" onClick={fetchClassReports} disabled={reportsLoading}>
+                                {reportsLoading ? "Refreshing…" : "↻ Refresh reports"}
+                            </button>
+                        </div>
+                        {reportsLoading && !classReports ? <p>Loading class performance…</p> : null}
+                        {reportsError ? <div className="th-classroom-report-error" role="alert"><span>{reportsError}</span><button type="button" onClick={fetchClassReports}>Try again</button></div> : null}
+                        {classReports && (
+                            <>
+                                <div className="th-classroom-report-summary">
+                                    <article><span>Class average</span><strong>{classReports.classAveragePercentage == null ? "—" : `${Number(classReports.classAveragePercentage).toFixed(1)}%`}</strong></article>
+                                    <article><span>Assignments marked</span><strong>{classReports.markedAssignmentCount} / {classReports.assignmentCount}</strong></article>
+                                    <article><span>Learners in class</span><strong>{classReports.classroom?.learnerCount ?? learners.length}</strong></article>
+                                </div>
+                                <div className="th-classroom-report-empty" style={{ textAlign: "left", marginTop: 22 }}>
+                                    <h3>Attendance report</h3>
+                                    <p>{classReports.attendanceSessionCount || 0} completed lesson registers · attendance is based on completed sessions.</p>
+                                    {classReports.attendanceReports?.length ? <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}><thead><tr><th style={{ textAlign: "left", padding: 9 }}>Learner</th><th style={{ textAlign: "left", padding: 9 }}>Lessons</th><th style={{ textAlign: "left", padding: 9 }}>Attended</th><th style={{ textAlign: "left", padding: 9 }}>Absent</th><th style={{ textAlign: "left", padding: 9 }}>Attendance</th><th style={{ textAlign: "left", padding: 9 }}>Minutes</th></tr></thead><tbody>{classReports.attendanceReports.map(row => <tr key={row.learnerId}><td style={{ padding: 9 }}>{row.learnerName}</td><td style={{ padding: 9 }}>{row.lessonsHeld}</td><td style={{ padding: 9 }}>{row.attended}</td><td style={{ padding: 9 }}>{row.absent}</td><td style={{ padding: 9 }}><strong>{row.attendancePercentage}%</strong></td><td style={{ padding: 9 }}>{row.totalMinutes}</td></tr>)}</tbody></table><button type="button" onClick={() => { const rows=[["Learner","Lessons","Attended","Absent","Attendance %","Minutes"],...classReports.attendanceReports.map(r=>[r.learnerName,r.lessonsHeld,r.attended,r.absent,r.attendancePercentage,r.totalMinutes])];const csv=rows.map(row=>row.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n");const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="class-attendance-report.csv";a.click();URL.revokeObjectURL(url); }}>Export attendance CSV</button></div> : <p>No completed attendance records yet.</p>}
+                                </div>
+                                {!classReports.assignmentReports?.length ? (
+                                    <div className="th-classroom-report-empty"><h3>No assignment reports yet</h3><p>Create assignments and mark learner submissions. Their average percentages will appear here.</p></div>
+                                ) : (
+                                    <div className="th-classroom-report-chart" role="group" aria-label="Average percentage by assignment">
+                                        <div className="th-classroom-report-axis"><span>Assignment</span><span>Average percentage</span></div>
+                                        {classReports.assignmentReports.map((item) => {
+                                            const value = item.averagePercentage == null ? null : Math.max(0, Math.min(100, Number(item.averagePercentage)));
+                                            return (
+                                                <article className="th-classroom-report-row" key={`${item.kind}-${item.id}`}>
+                                                    <div className="th-classroom-report-row-top">
+                                                        <div><strong>{item.title}</strong><small>{item.kind} · {item.markedCount} marked / {item.submittedCount} submitted</small></div>
+                                                        <div className="th-classroom-report-value">
+                                                            <strong>{value == null ? "Not marked" : `${value.toFixed(1)}%`}</strong>
+                                                            <small>{item.averageMark == null ? "No marks yet" : `Average ${item.averageMark} / ${item.totalMarks}`}</small>
+                                                        </div>
+                                                    </div>
+                                                    <div className="th-classroom-report-track" role="img" aria-label={`${item.title}: ${value == null ? "not marked" : `${value.toFixed(1)} percent average`}`}>
+                                                        <div className="th-classroom-report-fill" style={{ width: `${value ?? 0}%` }} />
+                                                    </div>
+                                                </article>
+                                            );
+                                        })}
+                                        <div className="th-classroom-report-scale"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </section>
+                )}
 
                 {/* ================================= */}
                 {/* STREAM */}
@@ -1833,10 +1881,7 @@ function TutorClassroom() {
 
                                             <button
                                                 onClick={() =>
-                                                    window.open(
-                                                        item.file,
-                                                        "_blank"
-                                                    )
+                                                    window.dispatchEvent(new CustomEvent("tutorhub:open-resource", { detail: { url: item.file } }))
                                                 }
                                             >
                                                 ⬇️ Open Material
@@ -2256,7 +2301,7 @@ function TutorClassroom() {
 
                         <hr />
 
-                        {assignments.length === 0 ? (
+                        {assignments.length === 0 && documentAssignments.length === 0 ? (
 
                             <div style={styles.emptyCard}>
 
@@ -2274,7 +2319,7 @@ function TutorClassroom() {
 
                         ) : (
 
-                            assignments.map(
+                            [...assignments, ...documentAssignments].map(
                                 (item) => (
 
                                     <div
@@ -2340,11 +2385,7 @@ function TutorClassroom() {
                                         </p>
 
                                         <button
-                                            onClick={() =>
-                                                navigate(
-                                                    `/tutor-submissions/${item._id}`
-                                                )
-                                            }
+                                            onClick={() => openAssignmentSubmissions(item)}
                                         >
                                             👥 View Submissions
                                         </button>
@@ -2392,10 +2433,7 @@ function TutorClassroom() {
                                 </h2>
 
                                 <p>
-                                    Schedule live Jitsi
-                                    lessons and manage
-                                    your YouTube
-                                    recordings.
+                                    Schedule and teach live TutorHub lessons using LiveKit, with a shared teaching board, document presentation, chat and screen sharing.
                                 </p>
 
                             </div>
@@ -2572,7 +2610,7 @@ function TutorClassroom() {
                                     <p style={styles.notice}>
 
                                         💡 As the tutor, you
-                                        can enter the Jitsi
+                                        can enter the live classroom
                                         room before the
                                         scheduled start time
                                         to set up and wait
@@ -2903,9 +2941,29 @@ function TutorClassroom() {
                 <br />
                 <br />
 
-                <BackButton />
+                <BackButton to={workspaceHomePath} />
+                  </main>
+                </div>
 
             </div>
+
+            {embeddedView?.type === "meeting" && (
+                <div className="th-live-overlay" role="dialog" aria-modal="true" aria-label="Live classroom">
+                    <LiveLessonRoom lesson={embeddedView.lesson} onClose={() => setEmbeddedView(null)} />
+                </div>
+            )}
+            {embeddedView?.type === "recording" && (
+                <div className="th-live-overlay" role="dialog" aria-modal="true" aria-label="Recording">
+                    <div className="th-live-modal-head">
+                        <div><span className="th-live-kicker">TUTORHUB</span><strong>{embeddedView.type === "meeting" ? "Live Classroom" : "Lesson Recording"}</strong></div>
+                        <button className="th-live-close" onClick={() => setEmbeddedView(null)}>Close ✕</button>
+                    </div>
+                    <iframe title="Lesson recording"
+                        src={embeddedView.url} allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write" allowFullScreen
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        className="th-live-frame" />
+                </div>
+            )}
 
         </div>
 
@@ -3003,16 +3061,14 @@ function LessonCard({
 
                     </p>
 
-                    {lesson.jitsiRoom && (
+                    {lesson._id && (
 
                         <button
                             onClick={() =>
-                                onJoin(
-                                    lesson.jitsiRoom
-                                )
+                                onJoin(lesson)
                             }
                         >
-                            🎥 Enter & Set Up Class
+                            🔴 Start Live Lesson
                         </button>
 
                     )}
@@ -3034,13 +3090,11 @@ function LessonCard({
 
                     </p>
 
-                    {lesson.jitsiRoom && (
+                    {lesson._id && (
 
                         <button
                             onClick={() =>
-                                onJoin(
-                                    lesson.jitsiRoom
-                                )
+                                onJoin(lesson)
                             }
                         >
                             🔴 Join Live Lesson
@@ -3324,8 +3378,3 @@ const styles = {
 };
 
 export default TutorClassroom;
-
-
-
-
-

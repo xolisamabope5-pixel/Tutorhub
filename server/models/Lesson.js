@@ -34,10 +34,21 @@ const lessonSchema = new mongoose.Schema(
             required: true
         },
 
-        // Automatically generated Jitsi room
-        jitsiRoom: {
+        duration: {
+            type: Number,
+            default: 60,
+            min: 1
+        },
+
+        // Stable LiveKit room identifier (Jitsi is no longer used)
+        livekitRoom: {
             type: String,
-            required: true
+            default: ""
+        },
+        attendanceSessionId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AttendanceSession",
+            default: null
         },
 
         // YouTube recording link added after the lesson

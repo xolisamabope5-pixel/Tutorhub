@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API_URL from "../api";
 
 function AdminLogin() {
 
@@ -38,7 +39,7 @@ function AdminLogin() {
 
             const response =
                 await fetch(
-                    "https://tutorhub-api-bz1y.onrender.com/api/admin-auth/login",
+                    `${API_URL}/api/admin-auth/login`,
                     {
 
                         method: "POST",
@@ -181,14 +182,14 @@ function AdminLogin() {
                     <div>
 
                         <label style={styles.label}>
-                            Admin Username
+                            Admin Email
                         </label>
 
                         <input
 
-                            type="text"
+                            type="email"
 
-                            placeholder="Enter admin username"
+                            placeholder="Enter admin email address"
 
                             value={username}
 
@@ -198,7 +199,7 @@ function AdminLogin() {
                                 )
                             }
 
-                            autoComplete="username"
+                            autoComplete="email"
 
                             style={styles.input}
 

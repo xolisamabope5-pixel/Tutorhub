@@ -1,15 +1,30 @@
+import API_URL from "../../api.js";
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackButton from "../../components/BackButton";
+import "../../styles/learner-assignments.css";
 
 function Assignments() {
 
     const navigate = useNavigate();
+    const learnerAuthHeaders = () => {
+        let token = "";
+        try { token = JSON.parse(localStorage.getItem("learner") || "null")?.token || ""; } catch { /* no session */ }
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
+    const assignmentFileUrl = (value) => {
+        if (!value) return "";
+        const url = String(value).trim();
+        if (/^https?:\/\//i.test(url) || url.startsWith("blob:") || url.startsWith("data:")) return url;
+        return `${API_URL.replace(/\/$/, "")}/${url.replace(/^\//, "")}`;
+    };
 
     const [learner, setLearner] = useState(null);
 
     const [assignments, setAssignments] = useState([]);
+    const [documentAssignments, setDocumentAssignments] = useState([]);
 
     const [selectedAssignment, setSelectedAssignment] =
         useState(null);
@@ -64,7 +79,7 @@ function Assignments() {
 
 
             const classResponse = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/program/${learnerData.programId._id}/${learnerData.grade}`
+                `${API_URL}/api/classes/program/${learnerData.programId?._id || learnerData.programId}/${encodeURIComponent(String(learnerData.grade).trim())}`
             );
 
 
@@ -87,19 +102,17 @@ function Assignments() {
 
 
             let allAssignments = [];
-
+            let allDocumentAssignments = [];
 
             for (const classroom of joinedClasses) {
 
                 const assignmentResponse =
                     await fetch(
-                        `https://tutorhub-api-bz1y.onrender.com/api/assignments/class/${classroom._id}`
+                        `${API_URL}/api/assignments/class/${classroom._id}`
                     );
-
 
                 const classAssignments =
                     await assignmentResponse.json();
-
 
                 const updatedAssignments =
                     classAssignments.map(
@@ -111,20 +124,58 @@ function Assignments() {
                                 classroom.className,
 
                             subject:
-                                classroom.subject
+                                classroom.subject,
+
+                            assignmentType:
+                                "question"
 
                         })
                     );
 
-
                 allAssignments.push(
                     ...updatedAssignments
+                );
+
+
+                const documentResponse =
+                    await fetch(
+                        `${API_URL}/api/document-assignments/class/${classroom._id}`,
+                        { headers: learnerAuthHeaders() }
+                    );
+
+                const classDocumentAssignments =
+                    await documentResponse.json();
+
+                const updatedDocumentAssignments =
+                    classDocumentAssignments.map(
+                        (assignment) => ({
+
+                            ...assignment,
+
+                            className:
+                                classroom.className,
+
+                            subject:
+                                classroom.subject,
+
+                            assignmentType:
+                                "document"
+
+                        })
+                    );
+
+                allDocumentAssignments.push(
+                    ...updatedDocumentAssignments
                 );
 
             }
 
 
             setAssignments(allAssignments);
+
+            setDocumentAssignments(
+                allDocumentAssignments
+            );
 
 
         } catch (error) {
@@ -235,7 +286,7 @@ function Assignments() {
 
             const response =
                 await fetch(
-                    `https://tutorhub-api-bz1y.onrender.com/api/assignments/${assignmentId}`
+                    `${API_URL}/api/assignments/${assignmentId}`
                 );
 
 
@@ -298,7 +349,7 @@ function Assignments() {
 
                     const submissionResponse =
                         await fetch(
-                            `https://tutorhub-api-bz1y.onrender.com/api/submissions/learner/${learnerId}/${assignmentId}`
+                            `${API_URL}/api/submissions/learner/${learnerId}/${assignmentId}`
                         );
 
 
@@ -623,7 +674,7 @@ function Assignments() {
 
             const response =
                 await fetch(
-                    "https://tutorhub-api-bz1y.onrender.com/api/submissions/create",
+                    `${API_URL}/api/submissions/create`,
                     {
 
                         method: "POST",
@@ -742,7 +793,7 @@ function Assignments() {
 
     return (
 
-        <div>
+        <div className="th-learner-assignments">
 
 
             {/* ================================= */}
@@ -939,15 +990,117 @@ function Assignments() {
             )}
 
 
+                        {/* ================================= */}
+            {/* DOCUMENT ASSIGNMENTS */}
+            {/* ================================= */}
+
+            {!selectedAssignment && documentAssignments.length > 0 && (
+
+                <div>
+
+                    <h2>
+                        ?? Document Assignments
+                    </h2>
+
+                    {documentAssignments.map((item) => {
+
+                        const closed =
+                            new Date(item.dueDate).setHours(
+                                23,
+                                59,
+                                59,
+                                999
+                            ) < new Date().getTime();
+
+                        return (
+
+                            <div
+                                key={item._id}
+                                className="th-document-assignment-card"
+                            >
+
+                                <h3>
+                                    {item.title}
+                                </h3>
+
+                                <p>
+                                    <strong>
+                                        Class:
+                                    </strong>{" "}
+                                    {item.className}
+                                </p>
+
+                                <p>
+                                    <strong>
+                                        Subject:
+                                    </strong>{" "}
+                                    {item.subject}
+                                </p>
+
+                                {item.description && (
+
+                                    <p>
+                                        <strong>
+                                            Description:
+                                        </strong>{" "}
+                                        {item.description}
+                                    </p>
+
+                                )}
+
+                                <p>
+                                    <strong>
+                                        Marks:
+                                    </strong>{" "}
+                                    {item.totalMarks}
+                                </p>
+
+                                <p>
+                                    <strong>
+                                        Due:
+                                    </strong>{" "}
+                                    {new Date(
+                                        item.dueDate
+                                    ).toLocaleDateString()}
+                                </p>
+
+                                <p>
+                                    {closed
+                                        ? "Assignment Closed"
+                                        : "Assignment Open"}
+                                </p>
+
+                                {item.document && (
+                                    <div className="th-document-assignment-actions">
+                                    <a href={assignmentFileUrl(item.document)} target="_blank" rel="noreferrer" download>Download assignment file</a>
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate(`/learner/document-assignment/${item._id}`)}
+                                    >
+                                        Open Document
+                                    </button>
+                                    </div>
+                                )}
+
+                            </div>
+
+                        );
+
+                    })}
+
+                </div>
+
+            )}
+
             {/* ================================= */}
             {/* SELECTED ASSIGNMENT */}
             {/* ================================= */}
 
             {selectedAssignment && (
 
-                <div>
+                <div className="th-learner-assignment-detail">
 
-                    <button
+                    <button className="th-assignment-back"
                         onClick={
                             closeAssignment
                         }
@@ -1077,6 +1230,13 @@ function Assignments() {
                                     }
                                 </p>
 
+                            )}
+
+                            {selectedAssignment.attachment && (
+                                <section className="th-assignment-resource">
+                                    <div><span className="th-assignment-file-icon">↓</span><div><strong>Assignment attachment</strong><small>Download the tutor's supporting file before you begin.</small></div></div>
+                                    <a href={assignmentFileUrl(selectedAssignment.attachment)} target="_blank" rel="noreferrer" download>Download file</a>
+                                </section>
                             )}
 
 
@@ -1499,5 +1659,3 @@ function Assignments() {
 }
 
 export default Assignments;
-
-

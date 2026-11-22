@@ -1,3 +1,4 @@
+import API_URL from "../api.js";
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -24,7 +25,7 @@ function Hero() {
             try {
 
                 const response = await fetch(
-                    "https://tutorhub-api-bz1y.onrender.com/api/platform-settings"
+                    `${API_URL}/api/platform-settings`
                 );
 
                 if (!response.ok) {

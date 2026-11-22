@@ -1,3 +1,4 @@
+import API_URL from "../../api.js";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackButton from "../../components/BackButton";
@@ -52,7 +53,7 @@ function Payments(){
 
             const response = await fetch(
 
-                `https://tutorhub-api-bz1y.onrender.com/api/payments/owner/${ownerId}`
+                `${API_URL}/api/payments/owner/${ownerId}`
 
             );
 

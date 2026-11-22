@@ -1,11 +1,23 @@
+import "../styles/classroom-shell.css";
+import API_URL from "../api.js";
+import LiveLessonRoom from "../components/LiveLessonRoom.jsx";
 
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import BackButton from "../components/BackButton";
 
 function Classroom() {
 
+    const learnerAuthHeaders = (json = false) => {
+        let token = "";
+        try { token = JSON.parse(localStorage.getItem("learner") || "null")?.token || ""; } catch { /* no learner session */ }
+        return { ...(json ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+    };
+
+    const [embeddedView, setEmbeddedView] = useState(null);
+
     const { id } = useParams();
+    const navigate = useNavigate();
 
     // ==============================
     // CLASSROOM
@@ -30,6 +42,7 @@ function Classroom() {
     // ==============================
 
     const [assignments, setAssignments] = useState([]);
+    const [documentAssignments, setDocumentAssignments] = useState([]);
 
     const [selectedAssignment, setSelectedAssignment] = useState(null);
 
@@ -101,7 +114,8 @@ function Classroom() {
             setLoading(true);
 
             const classResponse = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/classes/${id}`
+                `${API_URL}/api/classes/${id}`,
+                { headers: learnerAuthHeaders() }
             );
 
             const classData = await classResponse.json();
@@ -120,7 +134,7 @@ function Classroom() {
             setClassroom(classData);
 
             await loadAssignments();
-
+            await loadDocumentAssignments();
             await loadLessons();
 
         } catch (error) {
@@ -147,7 +161,8 @@ function Classroom() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/assignments/class/${id}`
+                `${API_URL}/api/assignments/class/${id}`,
+                { headers: learnerAuthHeaders() }
             );
 
             const data = await response.json();
@@ -179,6 +194,18 @@ function Classroom() {
     };
 
     // ==============================
+    // FETCH DOCUMENT ASSIGNMENTS
+    // ==============================
+    const loadDocumentAssignments = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/document-assignments/class/${id}`, { headers: learnerAuthHeaders() });
+            const data = await response.json();
+            if (response.ok) setDocumentAssignments(Array.isArray(data) ? data : []);
+            else console.log(data.message || "Failed to load document assignments");
+        } catch (error) { console.log("Error loading document assignments:", error); }
+    };
+
+    // ==============================
     // FETCH LESSONS
     // ==============================
 
@@ -187,7 +214,8 @@ function Classroom() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/lessons/class/${id}`
+                `${API_URL}/api/lessons/class/${id}`,
+                { headers: learnerAuthHeaders() }
             );
 
             const data = await response.json();
@@ -255,6 +283,9 @@ function Classroom() {
     // ==============================
 
     const getLessonStatus = (lesson) => {
+        if (lesson.status === "Live") return "live";
+        if (lesson.status === "Completed") return "completed";
+
 
         if (!lesson.date || !lesson.time) {
 
@@ -359,26 +390,12 @@ function Classroom() {
         );
 
     // ==============================
-    // JOIN JITSI
+    // JOIN LIVEKIT CLASSROOM
     // ==============================
 
-    const joinLesson = (room) => {
-
-        if (!room) {
-
-            alert(
-                "Live lesson link is not available."
-            );
-
-            return;
-
-        }
-
-        window.open(
-            `https://meet.jit.si/${room}`,
-            "_blank"
-        );
-
+    const joinLesson = (lessonItem) => {
+        if (!lessonItem?._id) { alert("Lesson details are missing."); return; }
+        setEmbeddedView({ type: "meeting", lesson: lessonItem });
     };
 
     // ==============================
@@ -386,22 +403,14 @@ function Classroom() {
     // ==============================
 
     const watchRecording = (link) => {
-
         if (!link) {
-
-            alert(
-                "Recording is not available yet."
-            );
-
+            alert("Recording is not available yet.");
             return;
-
         }
-
-        window.open(
-            link,
-            "_blank"
-        );
-
+        let url = String(link).trim();
+        const youtube = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        if (youtube) url = `https://www.youtube-nocookie.com/embed/${youtube[1]}`;
+        setEmbeddedView({ type: "recording", url });
     };
 
     // ==============================
@@ -425,7 +434,7 @@ function Classroom() {
             // ==============================
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/assignments/${assignmentId}`
+                `${API_URL}/api/assignments/${assignmentId}`
             );
 
             const data = await response.json();
@@ -480,7 +489,8 @@ function Classroom() {
 
                     const submissionResponse =
                         await fetch(
-                            `https://tutorhub-api-bz1y.onrender.com/api/submissions/learner/${learnerId}/${assignmentId}`
+                            `${API_URL}/api/submissions/learner/${learnerId}/${assignmentId}`,
+                            { headers: learnerAuthHeaders() }
                         );
 
                     if (submissionResponse.ok) {
@@ -806,15 +816,12 @@ const submitAssignment = async () => {
 
         const response =
             await fetch(
-                "https://tutorhub-api-bz1y.onrender.com/api/submissions/create",
+                `${API_URL}/api/submissions/create`,
                 {
 
                     method: "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                    headers: learnerAuthHeaders(true),
 
                     body: JSON.stringify({
 
@@ -987,9 +994,7 @@ const submitAssignment = async () => {
 
                         <button
                             onClick={() =>
-                                joinLesson(
-                                    lesson.jitsiRoom
-                                )
+                                joinLesson(lesson)
                             }
                         >
                             🔴 Join Live Lesson
@@ -1227,55 +1232,21 @@ const submitAssignment = async () => {
 
             <hr />
 
-            {/* ================================= */}
-            {/* CLASSROOM NAVIGATION */}
-            {/* ================================= */}
-
-            <div>
-
-                <button
-                    onClick={() =>
-                        setActiveTab("stream")
-                    }
-                >
-                    📢 Stream
-                </button>
-
-                <button
-                    onClick={() =>
-                        setActiveTab("materials")
-                    }
-                >
-                    📚 Materials
-                </button>
-
-                <button
-                    onClick={() =>
-                        setActiveTab("assignments")
-                    }
-                >
-                    📝 Assignments
-                </button>
-
-                <button
-                    onClick={() =>
-                        setActiveTab("lessons")
-                    }
-                >
-                    🎥 Lessons
-                </button>
-
-                <button
-                    onClick={() =>
-                        setActiveTab("people")
-                    }
-                >
-                    👥 People
-                </button>
-
-            </div>
-
-            <hr />
+            <div className="th-classroom-layout">
+              <aside className="th-classroom-sidebar" aria-label="Classroom navigation">
+                <div className="th-classroom-brand">TutorHub <span>Classroom</span></div>
+                {[['stream','📢','Announcements'],['materials','📚','Materials'],['assignments','📝','Assignments'],['results','✓','Results'],['lessons','🎥','Lessons'],['people','👥','People']].map(([key,icon,label]) => (
+                  <button key={key} className={`th-classroom-nav ${activeTab===key?'active':''}`} onClick={()=>setActiveTab(key)}><span>{icon}</span>{label}</button>
+                ))}
+              </aside>
+              <main className="th-classroom-content">
+            {activeTab === "results" && (
+                <section className="th-classroom-workspace-panel">
+                    <h2>✓ My Results</h2>
+                    <p>Only marks released by your tutor are shown here.</p>
+                    <button onClick={() => navigate("/learner/results")}>Open all released results →</button>
+                </section>
+            )}
 
             {/* ================================= */}
             {/* STREAM */}
@@ -1416,13 +1387,9 @@ const submitAssignment = async () => {
 
                                     {material.file && (
 
-                                        <a
-                                            href={material.file}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        >
-                                            ⬇️ Download Material
-                                        </a>
+                                        <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("tutorhub:open-resource", { detail: { url: material.file, title: material.title || "Learning material" } }))}>
+                                            📖 View material inside TutorHub
+                                        </button>
 
                                     )}
 
@@ -1457,7 +1424,7 @@ const submitAssignment = async () => {
                                 📝 Assignments
                             </h2>
 
-                            {assignments.length === 0 ? (
+                            {assignments.length === 0 && documentAssignments.length === 0 ? (
 
                                 <div>
 
@@ -1477,20 +1444,20 @@ const submitAssignment = async () => {
 
                                 assignments.map(
                                     (assignment) => (
-
-                                        <AssignmentCard
-                                            key={
-                                                assignment._id
-                                            }
-                                            assignment={
-                                                assignment
-                                            }
-                                        />
-
+                                        <AssignmentCard key={assignment._id} assignment={assignment} />
                                     )
                                 )
 
                             )}
+                            {documentAssignments.length > 0 && <section style={{ marginTop: 24 }}>
+                                <h3>📄 Document assignments</h3>
+                                {documentAssignments.map(item => <article key={item._id} className="th-classroom-workspace-panel" style={{ marginBottom: 12, padding: 16 }}>
+                                    <h4>{item.title}</h4>
+                                    {item.description && <p>{item.description}</p>}
+                                    <p>Due: {item.dueDate ? new Date(item.dueDate).toLocaleString() : "No due date"} · {item.totalMarks} marks</p>
+                                    <button type="button" onClick={() => navigate(`/learner/document-assignment/${item._id}`)}>Open and submit →</button>
+                                </article>)}
+                            </section>}
 
                         </div>
 
@@ -2257,6 +2224,26 @@ const submitAssignment = async () => {
             <br />
 
             <BackButton />
+              </main>
+            </div>
+
+            {embeddedView?.type === "meeting" && (
+                <div className="th-live-overlay" role="dialog" aria-modal="true" aria-label="Live classroom">
+                    <LiveLessonRoom lesson={embeddedView.lesson} onClose={() => setEmbeddedView(null)} />
+                </div>
+            )}
+            {embeddedView?.type === "recording" && (
+                <div className="th-live-overlay" role="dialog" aria-modal="true" aria-label="Recording">
+                    <div className="th-live-modal-head">
+                        <div><span className="th-live-kicker">TUTORHUB</span><strong>{embeddedView.type === "meeting" ? "Live Classroom" : "Lesson Recording"}</strong></div>
+                        <button className="th-live-close" onClick={() => setEmbeddedView(null)}>Close ✕</button>
+                    </div>
+                    <iframe title="Lesson recording"
+                        src={embeddedView.url} allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write" allowFullScreen
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        className="th-live-frame" />
+                </div>
+            )}
 
         </div>
 

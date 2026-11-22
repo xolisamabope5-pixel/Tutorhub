@@ -1,9 +1,16 @@
+import API_URL from "../api.js";
 
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import BackButton from "../components/BackButton";
 
 function TutorMarkSubmission() {
+
+    const getAuthHeaders = (json = false) => {
+        let token = "";
+        try { token = JSON.parse(localStorage.getItem("tutor") || "null")?.token || ""; } catch { /* no session */ }
+        return { ...(json ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+    };
 
     const { id } = useParams();
 
@@ -32,7 +39,8 @@ function TutorMarkSubmission() {
         try {
 
             const response = await fetch(
-                `https://tutorhub-api-bz1y.onrender.com/api/submissions/${id}`
+                `${API_URL}/api/submissions/${id}`,
+                { headers: getAuthHeaders() }
             );
 
 
@@ -178,14 +186,11 @@ function TutorMarkSubmission() {
 
             const response =
                 await fetch(
-                    `https://tutorhub-api-bz1y.onrender.com/api/submissions/${id}`,
+                    `${API_URL}/api/submissions/${id}`,
                     {
                         method: "PUT",
 
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
+                        headers: getAuthHeaders(true),
 
                         body: JSON.stringify({
 
@@ -486,24 +491,30 @@ function TutorMarkSubmission() {
                             {/* CURRENT MARK */}
                             {/* ========================================= */}
 
-                            <p>
-
-                                Mark:
-
-                                {" "}
-
-                                <strong>
-                                    {
-                                        marks[index] ||
-                                        0
-                                    }
-                                </strong>
-
-                                {" / "}
-
-                                {questionMarks}
-
-                            </p>
+                            <label style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "14px", fontWeight: 600 }}>
+                                Mark (out of {questionMarks}):
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max={questionMarks}
+                                    step="0.5"
+                                    value={marks[index] ?? 0}
+                                    onChange={(event) => {
+                                        const value = event.target.value;
+                                        if (value === "") {
+                                            const updated = [...marks];
+                                            updated[index] = 0;
+                                            setMarks(updated);
+                                            return;
+                                        }
+                                        const numeric = Number(value);
+                                        if (numeric >= 0 && numeric <= questionMarks) {
+                                            markQuestion(index, numeric);
+                                        }
+                                    }}
+                                    style={{ width: "90px", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "8px" }}
+                                />
+                            </label>
 
                         </div>
 

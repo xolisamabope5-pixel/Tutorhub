@@ -1,3 +1,4 @@
+import API_URL from "../api.js";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -139,7 +140,7 @@ function CreateClass(){
             const response = await fetch(
 
 
-                "https://tutorhub-api-bz1y.onrender.com/api/classes/create",
+                `${API_URL}/api/classes/create`,
 
 
                 {

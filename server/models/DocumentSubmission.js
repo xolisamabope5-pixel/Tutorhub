@@ -46,6 +46,16 @@ const documentSubmissionSchema = new mongoose.Schema({
     status: {
         type: String,
         default: "Submitted"
+    },
+
+    resultVisible: {
+        type: Boolean,
+        default: false
+    },
+
+    resultVisibleAt: {
+        type: Date,
+        default: null
     }
 
 }, {
